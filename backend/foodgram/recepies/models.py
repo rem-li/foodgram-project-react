@@ -36,7 +36,7 @@ class Recipe(models.Model):
     text = models.TextField(verbose_name='Текст рецепта')
     ingredients = models.ManyToManyField(Ingredient, through='RecipeIngredient', verbose_name='Ингридиенты')
     tags = models.ManyToManyField(Tag, verbose_name='Тэги')
-    time = models.PositiveIntegerField(verbose_name='Время приготовления')
+    cooking_time = models.PositiveIntegerField(verbose_name='Время приготовления')
 
     class Meta:
         verbose_name = 'Рецепт'
