@@ -84,7 +84,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     ],
 
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -93,9 +93,28 @@ REST_FRAMEWORK = {
 }
 
 
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
-    'AUTH_HEADER_TYPES': ('Bearer',),
+DJOSER = {
+    'SERIALIZERS': {
+        'user_create': 'api.serializers.UserCreateSerializer',
+        'user': 'api.serializers.UserSerializer',
+    },
+    'PASSWORD_RESET_CONFIRM_URL': '#/password/reset/confirm/{uid}/{token}',
+    'USERNAME_RESET_CONFIRM_URL': '#/username/reset/confirm/{uid}/{token}',
+    'SEND_ACTIVATION_EMAIL': False,
+    'SEND_CONFIRMATION_EMAIL': True,
+    'TOKEN_MODEL': None,
+    'HIDE_USERS': False,
+    'USER_ID_FIELD': 'id',
+    'LOGIN_FIELD': 'email',
+    'LOGOUT_ON_PASSWORD_CHANGE': True,
+
+    # Use JWT tokens instead of regular token
+    'TOKEN_AUTHENTICATION_RULES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication'
+    ],
+    'JWT_AUTH_COOKIE': 'access_token',
+    'JWT_AUTH_REFRESH_COOKIE': 'refresh_token',
+    'JWT_AUTH_HEADER_PREFIX': 'Bearer',
 }
 
 
