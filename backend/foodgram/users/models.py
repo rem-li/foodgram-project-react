@@ -56,20 +56,37 @@ class User(AbstractUser):
         max_length=max(len(role) for role, _ in StatusUser)
     )
 
-    REQUIRED_FIELDS = ['email']
 
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
         ordering = ('id',)
+    
+    def subscribe(self, target_user):
+        Subscription.objects.create(subscriber=self, target_user=target_user)
+
+    def unsubscribe(self, target_user):
+        Subscription.objects.filter(subscriber=self, target_user=target_user).delete()
+
+    def is_subscribed_to(self, target_user):
+        return Subscription.objects.filter(subscriber=self, target_user=target_user).exists()
+
+    @property
+    def subscribers(self):
+        return [s.subscriber for s in self.targets.all()]
+
+    @property
+    def targets(self):
+        return [s.target_user for s in self.subscribers.all()]
 
     # def __str__(self):
     #     return self.username[:settings.LEN_TEXT]
 
-    @property
-    def is_admin(self):
-        return self.role == ADMIN or self.is_superuser or self.is_superuser
 
-    @property
-    def is_moderator(self):
-        return self.role == 'moderator'
+class Subscription(models.Model):
+    subscriber = models.ForeignKey(User, related_name='subscribers', on_delete=models.CASCADE)
+    target_user = models.ForeignKey(User, related_name='targets', on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('subscriber', 'target_user')
+
