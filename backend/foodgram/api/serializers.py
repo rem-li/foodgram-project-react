@@ -30,7 +30,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 class RecipeSerializer(serializers.ModelSerializer):
     ingredients = RecipeIngredientSerializer(many=True, read_only=True)
     tags = serializers.PrimaryKeyRelatedField(many=True, required=False, read_only=True)
-    author = serializers.StringRelatedField()
+    author = serializers.StringRelatedField(read_only=True)
     image = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:

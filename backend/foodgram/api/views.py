@@ -6,10 +6,6 @@ from users.models import User
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
-from django.db import IntegrityError
-from django.shortcuts import get_object_or_404
-from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
 from rest_framework.decorators import action
 from rest_framework.views import APIView
 from rest_framework.status import HTTP_201_CREATED
@@ -28,6 +24,10 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
+    def perform_create(self, serializer):
+        serializer.save(
+            author=self.request.user
+        )
 
 
 class UserReceiveTokenViewSet(CreateAPIView):
@@ -114,3 +114,56 @@ class SetPasswordView(APIView):
         user.save()
 
         return Response({'message': 'Password updated successfully'}, status=status.HTTP_200_OK)
+
+
+class UserSubscriptionsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        subscriptions = user.subscriptions.all()
+        
+        if not subscriptions:
+            return Response([])
+        
+        subscribed_users = [s for s in subscriptions]
+        recipes_list = []
+        
+        for user in subscribed_users:
+            recipes = Recipe.objects.filter(author=user).prefetch_related('tags')
+            serializer = RecipeSerializer(recipes, many=True)
+            recipes_list.append(serializer.data)
+
+        serializer = UserSerializer(subscribed_users, many=True)
+        response_data = {'users': serializer.data, 'recipes': recipes_list}
+        return Response(response_data)
+    
+    def post(self, request, user_id):
+        target_user_id = user_id
+
+        try:
+            target_user = User.objects.get(id=target_user_id)
+        except User.DoesNotExist:
+            return Response({'error': 'User does not exist'}, status=400)
+
+        user = request.user
+
+        if target_user == user or target_user.role == User.ADMIN:
+            return Response({'error': 'Invalid target user'}, status=400)
+
+        user.subscribe_to_user(target_user)
+        return Response({'success': True})
+
+    def delete(self, request, user_id):
+        user = request.user
+
+        try:
+            target_user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({'error': 'User does not exist'}, status=400)
+
+        if not user.is_subscribed_to(target_user):
+            return Response({'error': 'User is not subscribed'}, status=400)
+
+        user.unsubscribe_from_user(target_user)
+        return Response({'success': True})

@@ -10,83 +10,56 @@ ADMIN = 'admin'
 
 
 class User(AbstractUser):
-    StatusUser = (
+    # Определяем возможные значения поля "Статус пользователя"
+    ADMIN = 'admin'
+    MODERATOR = 'moderator'
+    USER = 'user'
+    STATUS_CHOICES = (
         (ADMIN, 'Администратор'),
         (MODERATOR, 'Модератор'),
         (USER, 'Пользователь'),
     )
-    password = models.CharField(
-        # max_length=settings.LEN_PASSWORD, 
-        max_length=100, 
-        blank=True, null=True)
+
+    # Поля модели
+    password = models.CharField(max_length=128, blank=True, null=True)
     username = models.CharField(
-        # max_length=settings.LEN_USER_FIELDS, 
-        max_length=100,
-        verbose_name='Имя пользователя',
+        max_length=150,
         unique=True,
-        db_index=True,
-        validators=[validate_username]
+        help_text='Обязательное поле. Максимальная длина 150 символов. Только буквы, цифры и символы @/./+/-/_ .',
+        validators=[validate_username],
+        error_messages={
+            'unique': 'Пользователь с таким именем уже существует.',
+        },
     )
-    email = models.EmailField(
-        # max_length=settings.LEN_EMAIL, 
-        max_length=100,
-        verbose_name='email',
-        unique=True
-    )
-    first_name = models.CharField(
-        # max_length=settings.LEN_USER_FIELDS, 
-        max_length=100,
-        verbose_name='имя',
-        blank=True
-    )
-    last_name = models.CharField(
-        # max_length=settings.LEN_USER_FIELDS, 
-        max_length=100,
-        verbose_name='фамилия',
-        blank=True
-    )
-    bio = models.TextField(
-        verbose_name='биография',
-        blank=True
-    )
+    email = models.EmailField(unique=True)
+    first_name = models.CharField(max_length=30, blank=True, verbose_name='имя')
+    last_name = models.CharField(max_length=30, blank=True, verbose_name='фамилия')
+    bio = models.TextField(blank=True, verbose_name='биография')
     role = models.CharField(
-        'Статус пользователя',
+        max_length=20,
+        choices=STATUS_CHOICES,
         default=USER,
-        choices=StatusUser,
-        max_length=max(len(role) for role, _ in StatusUser)
+        verbose_name='Статус пользователя'
     )
+    date_joined = models.DateTimeField(auto_now_add=True)
 
+    # Поля для функционала подписок
+    subscriptions = models.ManyToManyField('self', related_name='subscribers', symmetrical=False)
 
-    class Meta:
-        verbose_name = 'Пользователь'
-        verbose_name_plural = 'Пользователи'
-        ordering = ('id',)
-    
-    def subscribe(self, target_user):
-        Subscription.objects.create(subscriber=self, target_user=target_user)
+    # Методы для функционала подписок
+    def subscribe_to_user(self, target_user):
+        self.subscriptions.add(target_user)
 
-    def unsubscribe(self, target_user):
-        Subscription.objects.filter(subscriber=self, target_user=target_user).delete()
+    def unsubscribe_from_user(self, target_user):
+        self.subscriptions.remove(target_user)
 
     def is_subscribed_to(self, target_user):
-        return Subscription.objects.filter(subscriber=self, target_user=target_user).exists()
+        return self.subscriptions.filter(id=target_user.id).exists()
 
     @property
-    def subscribers(self):
-        return [s.subscriber for s in self.targets.all()]
+    def subscribed_users(self):
+        return [s for s in self.subscriptions.all()]
 
     @property
-    def targets(self):
-        return [s.target_user for s in self.subscribers.all()]
-
-    # def __str__(self):
-    #     return self.username[:settings.LEN_TEXT]
-
-
-class Subscription(models.Model):
-    subscriber = models.ForeignKey(User, related_name='subscribers', on_delete=models.CASCADE)
-    target_user = models.ForeignKey(User, related_name='targets', on_delete=models.CASCADE)
-
-    class Meta:
-        unique_together = ('subscriber', 'target_user')
-
+    def target_users(self):
+        return [s for s in self.subscribers.all()]
