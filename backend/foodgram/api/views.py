@@ -1,14 +1,34 @@
 from rest_framework import viewsets, status
+from rest_framework import mixins, viewsets
 from rest_framework.generics import CreateAPIView
-from api.serializers import TagSerializer, IngredientSerializer, RecipeSerializer, UserCreateSerializer, UserRecieveTokenSerializer, UserSerializer, SetPasswordSerializer
-from recepies.models import Tag, Ingredient, Recipe
+from api.serializers import (TagSerializer, IngredientSerializer, RecipeSerializer, UserCreateSerializer,
+                             UserRecieveTokenSerializer, UserSerializer, SetPasswordSerializer, RecipeListSerializer,
+                             RecipeCreateSerializer)
+from rest_framework.pagination import PageNumberPagination
+from recepies.models import Tag, Ingredient, Recipe, RecipeIngredient
 from users.models import User
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from api.permissions import IsRecipeAuthor
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.decorators import action
 from rest_framework.views import APIView
 from rest_framework.status import HTTP_201_CREATED
+from django.shortcuts import get_object_or_404
+
+
+class RecipeListPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'limit'
+    max_page_size = 1000
+    
+    def get_paginated_response(self, data):
+        return {
+            'count': self.page.paginator.count,
+            'next': self.get_next_link(),
+            'previous': self.get_previous_link(),
+            'results': data
+        }
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -22,12 +42,61 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    def perform_create(self, serializer):
-        serializer.save(
-            author=self.request.user
-        )
+    queryset = Recipe.objects.all().order_by('id')
+    permission_classes = [AllowAny]
+
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'destroy']:
+            permission_classes = [IsAuthenticated, IsRecipeAuthor]
+        else:
+            permission_classes = [AllowAny]
+        return [permission() for permission in permission_classes]
+
+    def create(self, request, *args, **kwargs):
+    # Создание рецепта
+        serializer = RecipeCreateSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        author = request.user
+        ingredients_data = serializer.validated_data.pop('ingredients')
+        tags_data = serializer.validated_data.pop('tags')
+        recipe = Recipe.objects.create(author=author, **serializer.validated_data)
+        for ingredient_data in ingredients_data:
+            ingredient = ingredient_data['id']
+            RecipeIngredient.objects.create(recipe=recipe, ingredients=ingredient, amount=ingredient_data['amount'])
+        for tag_data in tags_data:
+            tag = tag_data
+            recipe.tags.add(tag)
+        serializer = RecipeSerializer(recipe)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def list(self, request, *args, **kwargs):
+        # Получение списка рецептов
+        queryset = Recipe.objects.all()
+        serializer = RecipeListSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        # Получение конкретного рецепта по его id
+        recipe = get_object_or_404(Recipe.objects.all(), pk=pk)
+        serializer = RecipeSerializer(recipe)
+        return Response(serializer.data)
+
+    def update(self, request, pk=None):
+        # Обновление рецепта автором
+        recipe = get_object_or_404(Recipe.objects.all(), pk=pk)
+        self.check_object_permissions(request, recipe)
+        serializer = RecipeSerializer(recipe, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def destroy(self, request, pk=None):
+        # Удаление рецепта автором
+        recipe = get_object_or_404(Recipe.objects.all(), pk=pk)
+        self.check_object_permissions(request, recipe)
+        recipe.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class UserReceiveTokenViewSet(CreateAPIView):
