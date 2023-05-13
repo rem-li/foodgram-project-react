@@ -18,4 +18,5 @@ auth_urls = [path('login/', UserReceiveTokenViewSet.as_view(), name='login'),
 
 urlpatterns = [path('users/', include(user_urls)),
                path('auth/token/', include(auth_urls)),
+               path('recipes/<int:pk>/favorite/', RecipeViewSet.as_view({'post': 'favorite', 'delete': 'favorite'}), name='recipe_favorite'),
                path('', include(router.urls))]

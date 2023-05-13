@@ -2,7 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework import mixins, viewsets
 from rest_framework.generics import CreateAPIView
 from api.serializers import (TagSerializer, IngredientSerializer, RecipeSerializer, UserCreateSerializer,
-                             UserRecieveTokenSerializer, UserSerializer, SetPasswordSerializer, RecipeListSerializer,
+                             UserRecieveTokenSerializer, UserSerializer, SetPasswordSerializer,
                              RecipeCreateSerializer)
 from rest_framework.pagination import PageNumberPagination
 from recepies.models import Tag, Ingredient, Recipe, RecipeIngredient
@@ -15,6 +15,9 @@ from rest_framework.decorators import action
 from rest_framework.views import APIView
 from rest_framework.status import HTTP_201_CREATED
 from django.shortcuts import get_object_or_404
+from django.db.models import Exists, OuterRef
+from django.core.cache import cache
+from django.views.decorators.cache import cache_page
 
 
 class RecipeListPagination(PageNumberPagination):
@@ -52,6 +55,29 @@ class RecipeViewSet(viewsets.ModelViewSet):
         else:
             permission_classes = [AllowAny]
         return [permission() for permission in permission_classes]
+    
+    def retrieve(self, request, pk=None):
+        recipe = get_object_or_404(Recipe, pk=pk)
+
+        serializer = RecipeSerializer(
+            instance=recipe,
+            context={'request': request}
+        )
+
+        return Response(serializer.data)
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        if self.request.user.is_authenticated:
+            # Добавляем аннотацию is_favorited для каждого объекта Recipe
+            queryset = queryset.annotate(
+                is_favorited=Exists(
+                    self.request.user.favorite_recipes.filter(pk=OuterRef('pk'))
+                )
+            )
+
+        return queryset
 
     def create(self, request, *args, **kwargs):
     # Создание рецепта
@@ -73,13 +99,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         # Получение списка рецептов
         queryset = Recipe.objects.all()
-        serializer = RecipeListSerializer(queryset, many=True)
-        return Response(serializer.data)
-
-    def retrieve(self, request, pk=None):
-        # Получение конкретного рецепта по его id
-        recipe = get_object_or_404(Recipe.objects.all(), pk=pk)
-        serializer = RecipeSerializer(recipe)
+        serializer = RecipeSerializer(queryset, many=True, context={'request': request}) # Добавляем request в контекст
         return Response(serializer.data)
 
     def update(self, request, pk=None):
@@ -97,6 +117,35 @@ class RecipeViewSet(viewsets.ModelViewSet):
         self.check_object_permissions(request, recipe)
         recipe.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    @action(detail=True, methods=['POST', 'DELETE'], url_path='favorite', url_name='recipe_favorite')
+    def favorite(self, request, pk=None):
+        recipe = self.get_object()
+        user = request.user
+
+        if request.method == 'POST':
+            user.favorite_recipes.add(recipe)
+            is_favorited = True
+        elif request.method == 'DELETE':
+            user.favorite_recipes.remove(recipe)
+            is_favorited = False
+
+        # Сбрасываем кеш для пользователя и рецепта
+        cache.delete(f'user:{user.pk}:favorite_recipes')
+        cache.delete(f'recipe:{recipe.pk}:is_favorited')
+
+        data = {'is_favorited': is_favorited}
+
+        serializer = RecipeSerializer(
+            instance=recipe,
+            data=data,
+            partial=True,
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP)
 
 
 class UserReceiveTokenViewSet(CreateAPIView):

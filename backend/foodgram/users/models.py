@@ -42,6 +42,7 @@ class User(AbstractUser):
         verbose_name='Статус пользователя'
     )
     date_joined = models.DateTimeField(auto_now_add=True)
+    favorite_recipes = models.ManyToManyField('recepies.Recipe', blank=True, related_name='favorited_by')
 
     # Поля для функционала подписок
     subscriptions = models.ManyToManyField('self', related_name='subscribers', symmetrical=False)
