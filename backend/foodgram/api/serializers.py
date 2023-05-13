@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import BaseUserManager
 from rest_framework.pagination import PageNumberPagination
 from djoser.serializers import UserCreateSerializer, UserSerializer
-from recepies.models import Ingredient, Tag, Recipe, RecipeIngredient
+from recepies.models import Ingredient, Tag, Recipe, RecipeIngredient, ShoppingList
 from users.models import User
 from rest_framework.authentication import TokenAuthentication
 
@@ -50,23 +50,29 @@ class RecipeSerializer(serializers.ModelSerializer):
     author = UserSerializer()
     ingredients = RecipeIngredientSerializer(source='recipeingredient_set', many=True)
     is_favorited = serializers.SerializerMethodField()
-    # is_in_shopping_cart = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
 
     def get_is_favorited(self, obj):
         user = self.context['request'].user
         # Проверяем, есть ли текущий рецепт в списке любимых рецептов пользователя
         return user.favorite_recipes.filter(pk=obj.pk).exists()
 
-    # def get_is_in_shopping_cart(self, obj):
-    #     request = self.context.get('request')
-    #     if request:
-    #         user = request.user
-    #         return obj.shopping_cart_recipes.filter(user=user).exists()
-    #     return False
+    def get_is_in_shopping_cart(self, obj):
+        # Проверяем, был ли выполнен запрос авторизации
+        if not self.context['request'].user.is_authenticated:
+            return False
+
+        user = self.context['request'].user
+        shopping_lists = ShoppingList.objects.filter(user=user)
+        for shopping_list in shopping_lists:
+            if shopping_list.shoppinglistitem_set.filter(recipe=obj).exists():
+                return True
+        return False
+
 
     class Meta:
         model = Recipe
-        fields = ('id', 'tags', 'author', 'ingredients', 'is_favorited', 'name', 'image', 'text', 'cooking_time')
+        fields = ('id', 'tags', 'author', 'ingredients', 'is_favorited', 'name', 'image', 'text', 'cooking_time', 'is_in_shopping_cart')
 
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
@@ -94,6 +100,14 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         recipe.tags.set(tags)
 
         return recipe
+
+
+class ShoppingListSerializer(serializers.ModelSerializer):
+    recipe = RecipeSerializer(read_only=True)
+
+    class Meta:
+        model = ShoppingList
+        fields = ('id', 'recipe', 'user')
 
 
 class UserSerializer(serializers.ModelSerializer):

@@ -3,9 +3,9 @@ from rest_framework import mixins, viewsets
 from rest_framework.generics import CreateAPIView
 from api.serializers import (TagSerializer, IngredientSerializer, RecipeSerializer, UserCreateSerializer,
                              UserRecieveTokenSerializer, UserSerializer, SetPasswordSerializer,
-                             RecipeCreateSerializer)
+                             RecipeCreateSerializer, ShoppingListSerializer)
 from rest_framework.pagination import PageNumberPagination
-from recepies.models import Tag, Ingredient, Recipe, RecipeIngredient
+from recepies.models import Tag, Ingredient, Recipe, RecipeIngredient, ShoppingList, ShoppingListItem
 from users.models import User
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from api.permissions import IsRecipeAuthor
@@ -18,6 +18,8 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Exists, OuterRef
 from django.core.cache import cache
 from django.views.decorators.cache import cache_page
+from django.http import HttpResponse
+
 
 
 class RecipeListPagination(PageNumberPagination):
@@ -91,9 +93,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             ingredient = ingredient_data['id']
             RecipeIngredient.objects.create(recipe=recipe, ingredients=ingredient, amount=ingredient_data['amount'])
         for tag_data in tags_data:
-            tag = tag_data
+            tag, created = Tag.objects.get_or_create(name=tag_data.name)
             recipe.tags.add(tag)
-        serializer = RecipeSerializer(recipe)
+        serializer = RecipeSerializer(recipe, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def list(self, request, *args, **kwargs):
@@ -146,6 +148,94 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer.save()
 
         return Response(serializer.data, status=status.HTTP)
+
+
+class ShoppingListViewSet(viewsets.ModelViewSet):
+    serializer_class = ShoppingListSerializer
+
+    def create(self, request, *args, **kwargs):
+        # Создание списка покупок и добавление рецепта в список
+        recipe_id = kwargs['id']
+        user = request.user
+        recipe = get_object_or_404(Recipe, id=recipe_id)
+        shopping_list, created = ShoppingList.objects.get_or_create(user=user)
+        for recipe_ingredient in recipe.recipeingredient_set.all():
+            cart_item, created = ShoppingListItem.objects.get_or_create(
+                shopping_list=shopping_list,
+                recipe=recipe,
+                ingredient=recipe_ingredient.ingredients,
+                amount=recipe_ingredient.amount,
+            )
+
+        # Проверяем, был ли выполнен запрос авторизации
+        if not request.user.is_authenticated:
+            # Если пользователь не авторизован, то возвращаем ошибку 401 Unauthorized.
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        # Передача контекста сериализатору при создании объекта
+        serializer = self.serializer_class(shopping_list, context={"request": request})
+
+        # Добавляем информацию о рецепте в ответ
+        recipe_serializer = RecipeSerializer(recipe, context={"request": request})
+        response_data = {
+            'recipe': recipe_serializer.data,
+            'shopping_list': serializer.data
+        }
+
+        return Response(response_data)
+
+    def destroy(self, request, *args, **kwargs):
+        # Удаление рецепта из списка покупок
+        recipe_id = kwargs['id']
+        user = request.user
+        recipe = get_object_or_404(Recipe, id=recipe_id)
+        shopping_list = get_object_or_404(ShoppingList, user=user)
+        shopping_list_items = shopping_list.shoppinglistitem_set.filter(recipe=recipe)
+        shopping_list_items.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ShoppingCartDownloadView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Получаем текущего пользователя
+        user = request.user
+
+        # Получаем список покупок пользователя
+        shopping_list_items = ShoppingListItem.objects.filter(shopping_list__user=user)
+
+        # Создаем словарь для хранения количества ингредиентов
+        ingredients_dict = {}
+
+        # Суммируем количество ингредиентов из каждого рецепта
+        for item in shopping_list_items:
+            ingredient_name = item.ingredient.name
+            ingredient_measurement_unit = item.ingredient.units
+            ingredient_amount = item.amount
+
+            # Если ингредиент уже есть в словаре, то добавляем новое количество к существующему
+            if ingredient_name in ingredients_dict:
+                ingredients_dict[ingredient_name]['amount'] += ingredient_amount
+            # Если ингредиента нет в словаре, то создаем новую запись
+            else:
+                ingredients_dict[ingredient_name] = {
+                    'measurement_unit': ingredient_measurement_unit,
+                    'amount': ingredient_amount
+                }
+
+        # Формируем строку со списком ингредиентов
+        ingredients_str = ''
+        for name, values in ingredients_dict.items():
+            measurement_unit = values['measurement_unit']
+            amount = values['amount']
+            ingredients_str += f"{name} ({measurement_unit}) — {amount}\n"
+
+        # Создаем объект HttpResponse и возвращаем его
+        response = HttpResponse(content_type='text/plain')
+        response['Content-Disposition'] = 'attachment; filename="shopping_list.txt"'
+        response.write(ingredients_str)
+        return response
 
 
 class UserReceiveTokenViewSet(CreateAPIView):

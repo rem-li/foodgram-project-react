@@ -50,3 +50,23 @@ class RecipeIngredient(models.Model):
     class Meta:
         unique_together = ('recipe', 'ingredients')
 
+
+class ShoppingList(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Список покупок'
+        verbose_name_plural = 'Списки покупок'
+
+
+class ShoppingListItem(models.Model):
+    shopping_list = models.ForeignKey(ShoppingList, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
+    amount = models.PositiveIntegerField(verbose_name='Количество')
+
+    class Meta:
+        unique_together = ('shopping_list', 'recipe', 'ingredient')
+        verbose_name = 'Пункт списка покупок'
+        verbose_name_plural = 'Пункты списков покупок'
