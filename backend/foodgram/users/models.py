@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -10,7 +9,6 @@ ADMIN = 'admin'
 
 
 class User(AbstractUser):
-    # Определяем возможные значения поля "Статус пользователя"
     ADMIN = 'admin'
     MODERATOR = 'moderator'
     USER = 'user'
@@ -19,21 +17,26 @@ class User(AbstractUser):
         (MODERATOR, 'Модератор'),
         (USER, 'Пользователь'),
     )
-
-    # Поля модели
     password = models.CharField(max_length=128, blank=True, null=True)
     username = models.CharField(
         max_length=150,
         unique=True,
-        help_text='Обязательное поле. Максимальная длина 150 символов. Только буквы, цифры и символы @/./+/-/_ .',
+        help_text=(
+            'Обязательное поле. Максимальная длина 150 символов. '
+            'Только буквы, цифры и символы @/./+/-/_ .'
+        ),
         validators=[validate_username],
         error_messages={
             'unique': 'Пользователь с таким именем уже существует.',
         },
     )
     email = models.EmailField(unique=True)
-    first_name = models.CharField(max_length=30, blank=True, verbose_name='имя')
-    last_name = models.CharField(max_length=30, blank=True, verbose_name='фамилия')
+    first_name = models.CharField(
+        max_length=30, blank=True, verbose_name='имя'
+        )
+    last_name = models.CharField(
+        max_length=30, blank=True, verbose_name='фамилия'
+        )
     bio = models.TextField(blank=True, verbose_name='биография')
     role = models.CharField(
         max_length=20,
@@ -42,12 +45,13 @@ class User(AbstractUser):
         verbose_name='Статус пользователя'
     )
     date_joined = models.DateTimeField(auto_now_add=True)
-    favorite_recipes = models.ManyToManyField('recepies.Recipe', blank=True, related_name='favorited_by')
+    favorite_recipes = models.ManyToManyField(
+        'recepies.Recipe', blank=True, related_name='favorited_by'
+        )
+    subscriptions = models.ManyToManyField(
+        'self', related_name='subscribers', symmetrical=False
+        )
 
-    # Поля для функционала подписок
-    subscriptions = models.ManyToManyField('self', related_name='subscribers', symmetrical=False)
-
-    # Методы для функционала подписок
     def subscribe_to_user(self, target_user):
         self.subscriptions.add(target_user)
 
