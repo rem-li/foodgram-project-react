@@ -59,7 +59,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filterset_class = RecipeFilter
 
     def get_permissions(self):
-        if self.action in ['update', 'partial_update', 'destroy']:
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
             permission_classes = [IsAuthenticated, IsRecipeAuthor]
         else:
             permission_classes = [AllowAny]
@@ -138,9 +138,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = request.user
         if request.method == 'POST':
             user.favorite_recipes.add(recipe)
+            recipe.favorite_count += 1
             is_favorited = True
         elif request.method == 'DELETE':
             user.favorite_recipes.remove(recipe)
+            recipe.favorite_count -= 1
             is_favorited = False
         cache.delete(f'user:{user.pk}:favorite_recipes')
         cache.delete(f'recipe:{recipe.pk}:is_favorited')
@@ -238,6 +240,7 @@ class ShoppingCartDownloadView(APIView):
 class UserReceiveTokenViewSet(CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserRecieveTokenSerializer
+    permission_classes = [AllowAny]
 
     def create(self, request, *args, **kwargs):
         serializer = UserRecieveTokenSerializer(data=request.data)

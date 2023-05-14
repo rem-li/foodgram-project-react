@@ -43,6 +43,9 @@ class Recipe(models.Model):
     pub_date = models.DateTimeField(
         auto_now_add=True, verbose_name='Дата добавления'
         )
+    favorite_count = models.PositiveIntegerField(
+        default=0, verbose_name='Количество добавлений в избранное'
+        )
 
     class Meta:
         verbose_name = 'Рецепт'
