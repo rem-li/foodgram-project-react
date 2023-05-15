@@ -9,15 +9,11 @@ ADMIN = 'admin'
 
 
 class User(AbstractUser):
-    ADMIN = 'admin'
-    MODERATOR = 'moderator'
-    USER = 'user'
     STATUS_CHOICES = (
         (ADMIN, 'Администратор'),
         (MODERATOR, 'Модератор'),
         (USER, 'Пользователь'),
     )
-    password = models.CharField(max_length=128, blank=True, null=True)
     username = models.CharField(
         max_length=150,
         unique=True,
@@ -63,8 +59,8 @@ class User(AbstractUser):
 
     @property
     def subscribed_users(self):
-        return [s for s in self.subscriptions.all()]
+        return User.objects.filter(subscribers=self)
 
     @property
     def target_users(self):
-        return [s for s in self.subscribers.all()]
+        return User.objects.filter(subscriptions=self)
