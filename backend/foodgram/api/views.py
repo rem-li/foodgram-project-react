@@ -1,21 +1,9 @@
-from api.permissions import IsRecipeAuthor
-from api.serializers import (IngredientSerializer, RecipeCreateSerializer,
-                             RecipeSerializer, SetPasswordSerializer,
-                             ShoppingListSerializer, TagSerializer,
-                             UserCreateSerializer, UserRecieveTokenSerializer,
-                             UserSerializer)
-
 from django.core.cache import cache
 from django.db.models import Exists, OuterRef
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-
-import django_filters
 from django_filters.rest_framework import DjangoFilterBackend
-
-from recepies.models import (Ingredient, Recipe, RecipeIngredient,
-                             ShoppingList, ShoppingListItem, Tag)
-
+from djoser.views import SetPasswordView
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import CreateAPIView
@@ -23,22 +11,18 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED
 from rest_framework.views import APIView
-
 from rest_framework_simplejwt.tokens import AccessToken
 
+from api.filters import RecipeFilter
+from api.permissions import IsRecipeAuthor
+from api.serializers import (IngredientSerializer, RecipeCreateSerializer,
+                             RecipeSerializer,
+                             ShoppingListSerializer, TagSerializer,
+                             UserCreateSerializer, UserRecieveTokenSerializer,
+                             UserSerializer)
+from recepies.models import (Ingredient, Recipe, RecipeIngredient,
+                             ShoppingList, ShoppingListItem, Tag)
 from users.models import User
-
-
-class RecipeFilter(django_filters.FilterSet):
-    tags = django_filters.ModelMultipleChoiceFilter(
-        field_name='tags__name',
-        to_field_name='name',
-        queryset=Tag.objects.all()
-    )
-
-    class Meta:
-        model = Recipe
-        fields = ['tags']
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -108,13 +92,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer = RecipeSerializer(recipe, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def list(self, request, *args, **kwargs):
-        queryset = Recipe.objects.all()
-        serializer = RecipeSerializer(
-            queryset, many=True, context={'request': request}
-            )
-        return Response(serializer.data)
-
     def update(self, request, pk=None):
         recipe = get_object_or_404(Recipe.objects.all(), pk=pk)
         self.check_object_permissions(request, recipe)
@@ -122,12 +99,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
-
-    def destroy(self, request, pk=None):
-        recipe = get_object_or_404(Recipe.objects.all(), pk=pk)
-        self.check_object_permissions(request, recipe)
-        recipe.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
             detail=True, methods=['POST', 'DELETE'],
@@ -159,7 +130,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(
-                serializer.data, status=status.HTTP_400_BAD_REQUEST
+                serializer.data, status=status.HTTP_204_NO_CONTENT
                 )
 
 
@@ -218,8 +189,9 @@ class ShoppingCartDownloadView(APIView):
             ingredient_measurement_unit = item.ingredient.units
             ingredient_amount = item.amount
             if ingredient_name in ingredients_dict:
-                ingredients_dict[ingredient_name]['amount'] += \
+                ingredients_dict[ingredient_name]['amount'] += (
                     ingredient_amount
+                )
             else:
                 ingredients_dict[ingredient_name] = {
                     'measurement_unit': ingredient_measurement_unit,
@@ -231,8 +203,9 @@ class ShoppingCartDownloadView(APIView):
             amount = values['amount']
             ingredients_str += f"{name} ({measurement_unit}) — {amount}\n"
         response = HttpResponse(content_type='text/plain')
-        response['Content-Disposition'] = 'attachment; \
-            filename="shopping_list.txt"'
+        response['Content-Disposition'] = (
+            'attachment; filename="shopping_list.txt"'
+        )
         response.write(ingredients_str)
         return response
 
@@ -302,25 +275,8 @@ class UserDeleteTokenViewSet(APIView):
             )
 
 
-class SetPasswordView(APIView):
-    permission_classes = (IsAuthenticated,)
-    serializer_class = SetPasswordSerializer
-
-    def post(self, request):
-        user = request.user
-        current_password = request.data.get('current_password')
-        new_password = request.data.get('new_password')
-        if not user.check_password(current_password):
-            return Response(
-                {'error': 'Invalid password'},
-                status=status.HTTP_400_BAD_REQUEST
-                )
-        user.set_password(new_password)
-        user.save()
-        return Response(
-            {'message': 'Password updated successfully'},
-            status=status.HTTP_200_OK
-            )
+class MySetPasswordView(SetPasswordView):
+    pass
 
 
 class UserSubscriptionsView(APIView):
@@ -331,28 +287,26 @@ class UserSubscriptionsView(APIView):
         subscriptions = user.subscriptions.all()
         if not subscriptions:
             return Response([])
-        subscribed_users = [s for s in subscriptions]
         recipes_list = []
-        for user in subscribed_users:
-            recipes = Recipe.objects\
-                .filter(author=user)\
-                .prefetch_related('tags')
+        for user in subscriptions:
+            recipes = Recipe.objects.filter(
+                author=user
+            ).prefetch_related('tags')
             serializer = RecipeSerializer(recipes, many=True)
             recipes_list.append(serializer.data)
         serializer = UserSerializer(
-            subscribed_users, many=True, context={'request': request}
+            subscriptions, many=True, context={'request': request}
             )
         response_data = {'users': serializer.data, 'recipes': recipes_list}
         return Response(response_data)
 
     def post(self, request, user_id):
-        target_user_id = user_id
         try:
-            target_user = User.objects.get(id=target_user_id)
+            target_user = User.objects.get(id=user_id)
         except User.DoesNotExist:
             return Response({'error': 'User does not exist'}, status=400)
         user = request.user
-        if target_user == user or target_user.role == User.ADMIN:
+        if target_user == user:
             return Response({'error': 'Invalid target user'}, status=400)
         serializer = UserSerializer(user, context={'target_user': target_user})
         user.subscribe_to_user(target_user)

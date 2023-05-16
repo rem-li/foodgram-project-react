@@ -1,3 +1,4 @@
+from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 
 from users.models import User
@@ -24,6 +25,16 @@ class Tag(models.Model):
     class Meta:
         verbose_name = 'Тэг'
         verbose_name_plural = 'Тэги'
+    
+    @staticmethod
+    def validate_hex_color(value):
+        hex_regex = r'^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$'
+        validator = RegexValidator(hex_regex, 'Значение должно быть шестнадцатеричным кодом цвета')
+        validator(value)
+
+    def clean(self):
+        super().clean()
+        self.validate_hex_color(self.hexcolor)
 
 
 class Recipe(models.Model):
@@ -38,7 +49,8 @@ class Recipe(models.Model):
         )
     tags = models.ManyToManyField(Tag, verbose_name='Тэги')
     cooking_time = models.PositiveIntegerField(
-        verbose_name='Время приготовления'
+        verbose_name='Время приготовления',
+        validators=[MinValueValidator(1)]
         )
     pub_date = models.DateTimeField(
         auto_now_add=True, verbose_name='Дата добавления'
@@ -63,7 +75,6 @@ class RecipeIngredient(models.Model):
 
 class ShoppingList(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = 'Список покупок'

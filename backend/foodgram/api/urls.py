@@ -1,12 +1,11 @@
-from api.views import (IngredientViewSet, RecipeViewSet, SetPasswordView,
+from django.urls import include, path
+from rest_framework import routers
+
+from api.views import (IngredientViewSet, RecipeViewSet, MySetPasswordView,
                        ShoppingCartDownloadView, ShoppingListViewSet,
                        TagViewSet, UserDeleteTokenViewSet,
                        UserReceiveTokenViewSet, UserSubscriptionsView,
                        UserViewSet)
-
-from django.urls import include, path
-
-from rest_framework import routers
 
 router = routers.DefaultRouter()
 router.register('users', UserViewSet, basename='users')
@@ -21,7 +20,7 @@ shopping_list_router.register(
     )
 
 user_urls = [path(
-    'set_password/', SetPasswordView.as_view(), name='set_password'
+    'set_password/', MySetPasswordView.as_view(), name='set_password'
     ),
              path(
     'subscriptions/', UserSubscriptionsView.as_view(), name='subscriptions'

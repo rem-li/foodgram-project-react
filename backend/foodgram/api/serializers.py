@@ -1,7 +1,9 @@
-from rest_framework import serializers
+from django.db import transaction
 from djoser.serializers import UserSerializer
-from recepies.models import (Ingredient, Tag, Recipe, RecipeIngredient,
-                             ShoppingList)
+from rest_framework import serializers
+
+from recepies.models import (Ingredient, Recipe, RecipeIngredient,
+                             ShoppingList, Tag)
 from users.models import User
 
 
@@ -61,13 +63,10 @@ class RecipeSerializer(serializers.ModelSerializer):
     def get_is_in_shopping_cart(self, obj):
         if not self.context['request'].user.is_authenticated:
             return False
-
         user = self.context['request'].user
-        shopping_lists = ShoppingList.objects.filter(user=user)
-        for shopping_list in shopping_lists:
-            if shopping_list.shoppinglistitem_set.filter(recipe=obj).exists():
-                return True
-        return False
+        shopping_lists = ShoppingList.objects.filter(user=user).prefetch_related('shoppinglistitem_set')
+        recipes_in_cart = Recipe.objects.filter(shoppinglistitem__shopping_list__in=shopping_lists)
+        return recipes_in_cart.filter(pk=obj.pk).exists()
 
     class Meta:
         model = Recipe
@@ -90,15 +89,30 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             'ingredients', 'tags', 'image', 'name', 'text', 'cooking_time'
             )
 
+    @transaction.atomic
+    def update(self, instance, validated_data):
+        ingredient_amounts = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+        for key, value in validated_data.items():
+            setattr(instance, key, value)
+        RecipeIngredient.objects.filter(recipe=instance).delete()
+        recipe_ingredients = [RecipeIngredient(recipe=instance, **ia) for ia in ingredient_amounts]
+        RecipeIngredient.objects.bulk_create(recipe_ingredients)
+        instance.tags.set(tags)
+        instance.save()
+        return instance
+
+    @transaction.atomic
     def create(self, validated_data):
         ingredient_amounts = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
-        recipe = Recipe.objects.create(
-            **validated_data, author=self.context['request'].user
-            )
-        for ingredient_amount in ingredient_amounts:
-            RecipeIngredient.objects.create(recipe=recipe, **ingredient_amount)
-        recipe.tags.set(tags)
+        with transaction.atomic():
+            recipe = Recipe.objects.create(
+                **validated_data, author=self.context['request'].user
+                )
+            recipe_ingredients = [RecipeIngredient(recipe=recipe, **ia) for ia in ingredient_amounts]
+            RecipeIngredient.objects.bulk_create(recipe_ingredients)
+            recipe.tags.set(tags)
         return recipe
 
 
@@ -135,16 +149,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 'email', 'password', 'first_name', 'last_name')
 
-    def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
-        return user
-
 
 class UserRecieveTokenSerializer(serializers.Serializer):
     email = serializers.CharField(required=True)
     password = serializers.CharField(required=True)
-
-
-class SetPasswordSerializer(serializers.Serializer):
-    current_password = serializers.CharField(max_length=128)
-    new_password = serializers.CharField(max_length=128)
