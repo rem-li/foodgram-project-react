@@ -25,11 +25,13 @@ class Tag(models.Model):
     class Meta:
         verbose_name = 'Тэг'
         verbose_name_plural = 'Тэги'
-    
+
     @staticmethod
     def validate_hex_color(value):
         hex_regex = r'^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$'
-        validator = RegexValidator(hex_regex, 'Значение должно быть шестнадцатеричным кодом цвета')
+        validator = RegexValidator(
+            hex_regex, 'Значение должно быть шестнадцатеричным кодом цвета'
+        )
         validator(value)
 
     def clean(self):
@@ -55,9 +57,6 @@ class Recipe(models.Model):
     pub_date = models.DateTimeField(
         auto_now_add=True, verbose_name='Дата добавления'
         )
-    favorite_count = models.PositiveIntegerField(
-        default=0, verbose_name='Количество добавлений в избранное'
-        )
 
     class Meta:
         verbose_name = 'Рецепт'
@@ -75,19 +74,8 @@ class RecipeIngredient(models.Model):
 
 class ShoppingList(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    recipes = models.ManyToManyField(Recipe, verbose_name='Рецепты')
 
     class Meta:
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
-
-
-class ShoppingListItem(models.Model):
-    shopping_list = models.ForeignKey(ShoppingList, on_delete=models.CASCADE)
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-    amount = models.PositiveIntegerField(verbose_name='Количество')
-
-    class Meta:
-        unique_together = ('shopping_list', 'recipe', 'ingredient')
-        verbose_name = 'Пункт списка покупок'
-        verbose_name_plural = 'Пункты списков покупок'

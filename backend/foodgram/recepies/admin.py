@@ -10,7 +10,7 @@ class IngredientInline(admin.TabularInline):
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     inlines = [IngredientInline]
-    list_display = ('pk', 'name', 'text', 'author', 'favorite_count',)
+    list_display = ('pk', 'name', 'text', 'author',)
     search_fields = ('name', 'text',)
     empty_value_display = '-пусто-'
 
