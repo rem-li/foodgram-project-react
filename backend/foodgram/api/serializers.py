@@ -161,3 +161,8 @@ class UserCreateSerializer(serializers.ModelSerializer):
 class UserRecieveTokenSerializer(serializers.Serializer):
     email = serializers.CharField(required=True)
     password = serializers.CharField(required=True)
+
+
+class SetPasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(max_length=128)
+    new_password = serializers.CharField(max_length=128)

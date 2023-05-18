@@ -3,7 +3,6 @@ from django.db.models import Exists, OuterRef, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from djoser.views import SetPasswordView
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import CreateAPIView
@@ -18,9 +17,9 @@ from api.permissions import IsRecipeAuthor
 from api.serializers import (IngredientSerializer, RecipeCreateSerializer,
                              RecipeSerializer, ShoppingListSerializer,
                              TagSerializer, UserCreateSerializer,
-                             UserRecieveTokenSerializer, UserSerializer)
-from recepies.models import (Ingredient, Recipe, RecipeIngredient,
-                             ShoppingList, ShoppingListItem, Tag)
+                             UserRecieveTokenSerializer, UserSerializer,
+                             SetPasswordSerializer)
+from recepies.models import Ingredient, Recipe, ShoppingList, Tag
 from users.models import User
 
 
@@ -119,7 +118,7 @@ class ShoppingListViewSet(viewsets.ModelViewSet):
         recipe = get_object_or_404(Recipe, id=kwargs['id'])
         user = request.user
         shopping_list, created = ShoppingList.objects.get_or_create(user=user)
-        cart_item, created = ShoppingListItem.objects.get_or_create(
+        cart_item, created = ShoppingList.objects.get_or_create(
             shopping_list=shopping_list,
             recipe=recipe,
         )
@@ -142,7 +141,7 @@ class ShoppingListViewSet(viewsets.ModelViewSet):
         user = request.user
         shopping_list = get_object_or_404(ShoppingList, user=user)
         cart_item = get_object_or_404(
-            ShoppingListItem,
+            ShoppingList,
             shopping_list=shopping_list,
             recipe=recipe,
         )
@@ -256,8 +255,25 @@ class UserDeleteTokenViewSet(APIView):
             )
 
 
-class MySetPasswordView(SetPasswordView):
-    pass
+class SetPasswordView(APIView): 
+    permission_classes = (IsAuthenticated,) 
+    serializer_class = SetPasswordSerializer
+
+    def post(self, request):
+        user = request.user
+        current_password = request.data.get('current_password')
+        new_password = request.data.get('new_password')
+        if not user.check_password(current_password):
+            return Response(
+                {'error': 'Invalid password'},
+                status=status.HTTP_400_BAD_REQUEST
+                )
+        user.set_password(new_password)
+        user.save()
+        return Response(
+            {'message': 'Password updated successfully'},
+            status=status.HTTP_200_OK
+            ) 
 
 
 class UserSubscriptionsView(APIView):
