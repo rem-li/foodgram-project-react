@@ -61,22 +61,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             )
         return queryset.order_by('-pub_date')
 
-    def create(self, request, *args, **kwargs):
-        serializer = RecipeCreateSerializer(
-            data=request.data, context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save(author=request.user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    def update(self, request, pk=None):
-        recipe = get_object_or_404(Recipe.objects.all(), pk=pk)
-        self.check_object_permissions(request, recipe)
-        serializer = RecipeSerializer(recipe, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-
     @action(
             detail=True, methods=['POST', 'DELETE'],
             url_path='favorite', url_name='recipe_favorite'
@@ -86,11 +70,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = request.user
         if request.method == 'POST':
             user.favorite_recipes.add(recipe)
-            recipe.favorite_count += 1
             is_favorited = True
         elif request.method == 'DELETE':
             user.favorite_recipes.remove(recipe)
-            recipe.favorite_count -= 1
             is_favorited = False
         cache.delete(f'user:{user.pk}:favorite_recipes')
         cache.delete(f'recipe:{recipe.pk}:is_favorited')
@@ -113,23 +95,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 class ShoppingListViewSet(viewsets.ModelViewSet):
     serializer_class = ShoppingListSerializer
+    http_method_names = ['post', 'delete']
 
     def create(self, request, *args, **kwargs):
         recipe = get_object_or_404(Recipe, id=kwargs['id'])
-        user = request.user
-        shopping_list, created = ShoppingList.objects.get_or_create(user=user)
-        cart_item, created = ShoppingList.objects.get_or_create(
-            shopping_list=shopping_list,
-            recipe=recipe,
-        )
-        if not request.user.is_authenticated:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-        serializer = self.serializer_class(
-            shopping_list, context={"request": request}
-            )
-        recipe_serializer = RecipeSerializer(
-            recipe, context={"request": request}
-            )
+        shopping_list, created = ShoppingList.objects.get_or_create(user=request.user)
+        shopping_list.recipes.add(recipe)
+        serializer = self.serializer_class(shopping_list, context={"request": request})
+        recipe_serializer = RecipeSerializer(recipe, context={"request": request})
         response_data = {
             'recipe': recipe_serializer.data,
             'shopping_list': serializer.data
@@ -138,44 +111,35 @@ class ShoppingListViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         recipe = get_object_or_404(Recipe, id=kwargs['id'])
-        user = request.user
-        shopping_list = get_object_or_404(ShoppingList, user=user)
-        cart_item = get_object_or_404(
-            ShoppingList,
-            shopping_list=shopping_list,
-            recipe=recipe,
-        )
-        cart_item.delete()
+        shopping_list = get_object_or_404(ShoppingList, user=request.user)
+        shopping_list.recipes.remove(recipe)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ShoppingCartDownloadView(APIView):
-    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         user = request.user
-        shopping_list_items = (
+        shopping_list = (
             ShoppingList.objects
-            .filter(user=user)
+            .select_related('user')
             .prefetch_related('recipes__ingredients')
             .annotate(total_amount=Sum('recipes__recipeingredient__amount'))
+            .get(user=user)
         )
         ingredients = []
-        for shopping_list in shopping_list_items:
-            recipes = shopping_list.recipes.all()
-            for recipe in recipes:
-                recipe_ingredients = recipe.recipeingredient_set.all()
-                for recipe_ingredient in recipe_ingredients:
-                    ingredient = recipe_ingredient.ingredients
-                    amount = (recipe_ingredient.amount *
-                              shopping_list.total_amount)
-                    ingredients.append(
-                        {
-                            'name': ingredient.name,
-                            'units': ingredient.units,
-                            'amount': amount
-                        }
-                    )
+        for recipe in shopping_list.recipes.all():
+            recipe_ingredients = recipe.recipeingredient_set.all()
+            for recipe_ingredient in recipe_ingredients:
+                ingredient = recipe_ingredient.ingredients
+                amount = recipe_ingredient.amount * shopping_list.total_amount
+                ingredients.append(
+                    {
+                        'name': ingredient.name,
+                        'units': ingredient.units,
+                        'amount': amount
+                    }
+                )
         ingredients_str = ''
         for ingredient in ingredients:
             name = ingredient['name']

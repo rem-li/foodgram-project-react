@@ -1,12 +1,11 @@
 from django.urls import include, path
-from djoser.views import SetPasswordViewSet
 from rest_framework import routers
 
 from api.views import (IngredientViewSet, RecipeViewSet,
                        ShoppingCartDownloadView, ShoppingListViewSet,
                        TagViewSet, UserDeleteTokenViewSet,
                        UserReceiveTokenViewSet, UserSubscriptionsView,
-                       UserViewSet)
+                       UserViewSet, SetPasswordView)
 
 router = routers.DefaultRouter()
 router.register('users', UserViewSet, basename='users')
@@ -21,7 +20,7 @@ shopping_list_router.register(
     )
 
 user_urls = [path(
-    'set_password/', SetPasswordViewSet.as_view(), name='set_password'
+    'set_password/', SetPasswordView.as_view(), name='set_password'
     ),
              path(
     'subscriptions/', UserSubscriptionsView.as_view(), name='subscriptions'

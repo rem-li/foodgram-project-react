@@ -64,13 +64,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         if not self.context['request'].user.is_authenticated:
             return False
         user = self.context['request'].user
-        shopping_lists = ShoppingList.objects.filter(
-            user=user
-        ).prefetch_related('shoppinglistitem_set')
-        recipes_in_cart = Recipe.objects.filter(
-            shoppinglistitem__shopping_list__in=shopping_lists
-        )
-        return recipes_in_cart.filter(pk=obj.pk).exists()
+        return obj.shoppinglist_set.filter(user=user, recipes=obj).exists()
 
     class Meta:
         model = Recipe
@@ -97,8 +91,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         ingredient_amounts = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
-        for key, value in validated_data.items():
-            setattr(instance, key, value)
+        instance = super().update(instance, validated_data)
         RecipeIngredient.objects.filter(recipe=instance).delete()
         recipe_ingredients = [
             RecipeIngredient(recipe=instance, **ia) for ia in ingredient_amounts
@@ -112,15 +105,14 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         ingredient_amounts = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
-        with transaction.atomic():
-            recipe = Recipe.objects.create(
-                **validated_data, author=self.context['request'].user
-                )
-            recipe_ingredients = [
-                RecipeIngredient(recipe=recipe, **ia) for ia in ingredient_amounts
-            ]
-            RecipeIngredient.objects.bulk_create(recipe_ingredients)
-            recipe.tags.set(tags)
+        recipe = Recipe.objects.create(
+            **validated_data, author=self.context['request'].user
+            )
+        recipe_ingredients = [
+            RecipeIngredient(recipe=recipe, **ia) for ia in ingredient_amounts
+        ]
+        RecipeIngredient.objects.bulk_create(recipe_ingredients)
+        recipe.tags.set(tags)
         return recipe
 
 
