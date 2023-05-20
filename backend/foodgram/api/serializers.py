@@ -24,7 +24,7 @@ class IngredientAmountSerializer(serializers.ModelSerializer):
         model = RecipeIngredient
         fields = ('id', 'amount')
 
-    def to_internal_value(self, data):  
+    def to_internal_value(self, data):
         ingredient = data.get('id')
         if isinstance(ingredient, Ingredient):
             data['id'] = ingredient.id
@@ -94,7 +94,9 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         instance = super().update(instance, validated_data)
         RecipeIngredient.objects.filter(recipe=instance).delete()
         recipe_ingredients = [
-            RecipeIngredient(recipe=instance, **ia) for ia in ingredient_amounts
+            RecipeIngredient(
+                recipe=instance, **ia
+            ) for ia in ingredient_amounts
         ]
         RecipeIngredient.objects.bulk_create(recipe_ingredients)
         instance.tags.set(tags)

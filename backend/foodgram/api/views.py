@@ -98,11 +98,17 @@ class ShoppingListViewSet(viewsets.ModelViewSet):
     http_method_names = ['post', 'delete']
 
     def create(self, request, *args, **kwargs):
-        recipe = get_object_or_404(Recipe, id=kwargs['id'])
-        shopping_list, created = ShoppingList.objects.get_or_create(user=request.user)
+        recipe = get_object_or_404(Recipe, id=self.kwargs['pk'])
+        shopping_list, created = ShoppingList.objects.get_or_create(
+            user=request.user
+        )
         shopping_list.recipes.add(recipe)
-        serializer = self.serializer_class(shopping_list, context={"request": request})
-        recipe_serializer = RecipeSerializer(recipe, context={"request": request})
+        serializer = self.serializer_class(
+            shopping_list, context={"request": request}
+        )
+        recipe_serializer = RecipeSerializer(
+            recipe, context={"request": request}
+        )
         response_data = {
             'recipe': recipe_serializer.data,
             'shopping_list': serializer.data
@@ -110,7 +116,7 @@ class ShoppingListViewSet(viewsets.ModelViewSet):
         return Response(response_data)
 
     def destroy(self, request, *args, **kwargs):
-        recipe = get_object_or_404(Recipe, id=kwargs['id'])
+        recipe = get_object_or_404(Recipe, id=self.kwargs['pk'])
         shopping_list = get_object_or_404(ShoppingList, user=request.user)
         shopping_list.recipes.remove(recipe)
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -219,8 +225,7 @@ class UserDeleteTokenViewSet(APIView):
             )
 
 
-class SetPasswordView(APIView): 
-    permission_classes = (IsAuthenticated,) 
+class SetPasswordView(APIView):
     serializer_class = SetPasswordSerializer
 
     def post(self, request):
@@ -237,7 +242,7 @@ class SetPasswordView(APIView):
         return Response(
             {'message': 'Password updated successfully'},
             status=status.HTTP_200_OK
-            ) 
+            )
 
 
 class UserSubscriptionsView(APIView):
