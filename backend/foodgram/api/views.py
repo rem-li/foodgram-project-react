@@ -1,5 +1,5 @@
 from django.core.cache import cache
-from django.db.models import Exists, OuterRef, Sum
+from django.db.models import Exists, OuterRef, Sum, F
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -14,12 +14,12 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from api.filters import RecipeFilter
 from api.permissions import IsRecipeAuthor
-from api.serializers import (IngredientSerializer, RecipeCreateSerializer,
+from api.serializers import (IngredientSerializer, SetPasswordSerializer,
                              RecipeSerializer, ShoppingListSerializer,
                              TagSerializer, UserCreateSerializer,
                              UserRecieveTokenSerializer, UserSerializer,
-                             SetPasswordSerializer)
-from recepies.models import Ingredient, Recipe, ShoppingList, Tag
+                             RecipeCreateSerializer)
+from recepies.models import Ingredient, Recipe, ShoppingList, Tag, RecipeIngredient
 from users.models import User
 
 
@@ -40,6 +40,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = RecipeFilter
     permission_classes = [IsRecipeAuthor]
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return RecipeCreateSerializer
+        return RecipeSerializer
+    
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
     def retrieve(self, request, pk=None):
         recipe = get_object_or_404(Recipe, pk=pk)
@@ -125,32 +133,22 @@ class ShoppingListViewSet(viewsets.ModelViewSet):
 class ShoppingCartDownloadView(APIView):
 
     def get(self, request):
-        user = request.user
-        shopping_list = (
-            ShoppingList.objects
-            .select_related('user')
-            .prefetch_related('recipes__ingredients')
-            .annotate(total_amount=Sum('recipes__recipeingredient__amount'))
-            .get(user=user)
-        )
-        ingredients = []
-        for recipe in shopping_list.recipes.all():
-            recipe_ingredients = recipe.recipeingredient_set.all()
-            for recipe_ingredient in recipe_ingredients:
-                ingredient = recipe_ingredient.ingredients
-                amount = recipe_ingredient.amount * shopping_list.total_amount
-                ingredients.append(
-                    {
-                        'name': ingredient.name,
-                        'units': ingredient.units,
-                        'amount': amount
-                    }
+        ingredients = (
+                RecipeIngredient.objects.select_related(
+                    'recipe', 'ingredients'
+                ).filter(
+                    recipe__shopping_lists__user=request.user,
+                ).annotate(
+                    name=F('ingredients__name'),
+                    units=F('ingredients__units'),
+                    total=Sum('amount'),
                 )
+            ) 
         ingredients_str = ''
         for ingredient in ingredients:
-            name = ingredient['name']
-            measurement_unit = ingredient['units']
-            amount = ingredient['amount']
+            name = ingredient.ingredients.name
+            amount = ingredient.amount
+            measurement_unit = ingredient.ingredients.units
             ingredients_str += f"{name} ({measurement_unit}) — {amount}\n"
         response = HttpResponse(content_type='text/plain')
         response['Content-Disposition'] = (

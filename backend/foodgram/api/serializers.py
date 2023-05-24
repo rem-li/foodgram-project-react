@@ -18,7 +18,7 @@ class IngredientAmountSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all(), write_only=True
         )
-    amount = serializers.FloatField()
+    amount = serializers.FloatField(write_only=True)
 
     class Meta:
         model = RecipeIngredient
@@ -64,7 +64,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         if not self.context['request'].user.is_authenticated:
             return False
         user = self.context['request'].user
-        return obj.shoppinglist_set.filter(user=user, recipes=obj).exists()
+        return obj.shopping_lists.filter(user=user).exists()
 
     class Meta:
         model = Recipe
@@ -77,7 +77,8 @@ class RecipeSerializer(serializers.ModelSerializer):
 class RecipeCreateSerializer(serializers.ModelSerializer):
     ingredients = IngredientAmountSerializer(many=True, required=True)
     tags = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Tag.objects.all()
+        many=True, queryset=Tag.objects.all(),
+        required=False
         )
     image = serializers.ImageField(required=False, allow_null=True)
 
@@ -90,7 +91,9 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def update(self, instance, validated_data):
         ingredient_amounts = validated_data.pop('ingredients')
-        tags = validated_data.pop('tags')
+        if 'tags' in validated_data:
+            tags = validated_data.pop('tags')
+            instance.tags.set(tags)
         instance = super().update(instance, validated_data)
         RecipeIngredient.objects.filter(recipe=instance).delete()
         recipe_ingredients = [
@@ -106,13 +109,17 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         ingredient_amounts = validated_data.pop('ingredients')
-        tags = validated_data.pop('tags')
-        recipe = Recipe.objects.create(
-            **validated_data, author=self.context['request'].user
+        tags = validated_data.pop('tags', [])
+        recipe = Recipe.objects.create(**validated_data)
+        recipe.author = self.context['request'].user
+        recipe_ingredients = []
+        for ia in ingredient_amounts:
+            ingredient = ia['id']
+            amount = ia['amount']
+            recipe_ingredient = RecipeIngredient(
+                recipe=recipe, ingredients=ingredient, amount=amount
             )
-        recipe_ingredients = [
-            RecipeIngredient(recipe=recipe, **ia) for ia in ingredient_amounts
-        ]
+            recipe_ingredients.append(recipe_ingredient)
         RecipeIngredient.objects.bulk_create(recipe_ingredients)
         recipe.tags.set(tags)
         return recipe

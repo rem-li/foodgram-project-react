@@ -74,7 +74,7 @@ class RecipeIngredient(models.Model):
 
 class ShoppingList(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    recipes = models.ManyToManyField(Recipe, verbose_name='Рецепты')
+    recipes = models.ManyToManyField(Recipe, related_name='shopping_lists', verbose_name='Рецепты')
 
     class Meta:
         verbose_name = 'Список покупок'
