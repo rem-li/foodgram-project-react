@@ -104,7 +104,7 @@ REST_FRAMEWORK = {
 
 DJOSER = {
     'SERIALIZERS': {
-        'user_create': 'api.serializers.UserCreateSerializer',
+        # 'user_create': 'api.serializers.UserCreateSerializer',
         'user': 'api.serializers.UserSerializer',
     },
     'PASSWORD_RESET_CONFIRM_URL': '#/password/reset/confirm/{uid}/{token}',

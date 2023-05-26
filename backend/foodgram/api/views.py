@@ -13,7 +13,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 
 from api.filters import RecipeFilter
-from api.permissions import IsRecipeAuthor
+from api.permissions import IsRecipeAuthor, IsCreateOnly
 from api.serializers import (IngredientSerializer, SetPasswordSerializer,
                              RecipeSerializer, ShoppingListSerializer,
                              TagSerializer, UserCreateSerializer,
@@ -184,6 +184,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     search_fields = ('username',)
     http_method_names = ['get', 'patch', 'post', 'delete']
+    permission_classes = [IsCreateOnly]
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
