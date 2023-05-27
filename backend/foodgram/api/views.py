@@ -13,13 +13,14 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
 
 from api.filters import RecipeFilter
-from api.permissions import IsRecipeAuthor, IsCreateOnly
-from api.serializers import (IngredientSerializer, SetPasswordSerializer,
-                             RecipeSerializer, ShoppingListSerializer,
-                             TagSerializer, UserCreateSerializer,
-                             UserRecieveTokenSerializer, UserSerializer,
-                             RecipeCreateSerializer)
-from recepies.models import Ingredient, Recipe, ShoppingList, Tag, RecipeIngredient
+from api.permissions import IsCreateOnly, IsRecipeAuthor
+from api.serializers import (IngredientSerializer, RecipeCreateSerializer,
+                             RecipeSerializer, SetPasswordSerializer,
+                             ShoppingListSerializer, TagSerializer,
+                             UserCreateSerializer, UserRecieveTokenSerializer,
+                             UserSerializer)
+from recepies.models import (Ingredient, Recipe, RecipeIngredient,
+                             ShoppingList, Tag)
 from users.models import User
 
 
@@ -45,7 +46,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return RecipeCreateSerializer
         return RecipeSerializer
-    
+
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
@@ -143,7 +144,7 @@ class ShoppingCartDownloadView(APIView):
                     units=F('ingredients__units'),
                     total=Sum('amount'),
                 )
-            ) 
+            )
         ingredients_str = ''
         for ingredient in ingredients:
             name = ingredient.ingredients.name
