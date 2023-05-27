@@ -7,7 +7,7 @@ from recepies.models import Ingredient
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        with open('../../data/ingredients.json', encoding='utf-8') as f:
+        with open('/data/ingredients.json', encoding='utf-8') as f:
             data = json.load(f)
 
         for item in data:
