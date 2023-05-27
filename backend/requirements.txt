@@ -26,7 +26,7 @@ Pillow==9.5.0
 pycparser==2.21
 PyJWT==2.7.0
 python-dateutil==2.8.2
-python-dotenv~=0.21.0
+python-dotenv==1.0.0
 python3-openid==3.2.0
 pytz==2023.3
 regex==2023.5.5
