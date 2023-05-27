@@ -1,9 +1,8 @@
 from django.db import transaction
 from djoser.serializers import UserSerializer
-from rest_framework import serializers
-
 from recepies.models import (Ingredient, Recipe, RecipeIngredient,
                              ShoppingList, Tag)
+from rest_framework import serializers
 from users.models import User
 
 

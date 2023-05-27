@@ -1,8 +1,17 @@
+from api.filters import RecipeFilter
+from api.permissions import IsCreateOnly, IsRecipeAuthor
+from api.serializers import (IngredientSerializer, RecipeCreateSerializer,
+                             RecipeSerializer, SetPasswordSerializer,
+                             ShoppingListSerializer, TagSerializer,
+                             UserCreateSerializer, UserRecieveTokenSerializer,
+                             UserSerializer)
 from django.core.cache import cache
-from django.db.models import Exists, OuterRef, Sum, F
+from django.db.models import Exists, F, OuterRef, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from recepies.models import (Ingredient, Recipe, RecipeIngredient,
+                             ShoppingList, Tag)
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.generics import CreateAPIView
@@ -11,16 +20,6 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import AccessToken
-
-from api.filters import RecipeFilter
-from api.permissions import IsCreateOnly, IsRecipeAuthor
-from api.serializers import (IngredientSerializer, RecipeCreateSerializer,
-                             RecipeSerializer, SetPasswordSerializer,
-                             ShoppingListSerializer, TagSerializer,
-                             UserCreateSerializer, UserRecieveTokenSerializer,
-                             UserSerializer)
-from recepies.models import (Ingredient, Recipe, RecipeIngredient,
-                             ShoppingList, Tag)
 from users.models import User
 
 
@@ -96,9 +95,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer.save()
         if is_favorited:
             return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response(
-                serializer.data, status=status.HTTP_204_NO_CONTENT
+        return Response(
+            serializer.data, status=status.HTTP_204_NO_CONTENT
                 )
 
 
@@ -190,8 +188,7 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return UserCreateSerializer
-        else:
-            return UserSerializer
+        return UserSerializer
 
     @action(
         detail=False,
