@@ -20,6 +20,8 @@ services:
       - db
     env_file:
       - ./.env
+    environment:
+      - PATH=$PATH:/home/remliza/.local/bin
   frontend:
     image: remli/foodgram-frontend:latest
     # build:
