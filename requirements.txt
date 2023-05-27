@@ -22,7 +22,6 @@ MarkupSafe==2.1.2
 mccabe==0.7.0
 oauthlib==3.2.2
 Pillow==9.5.0
-pycodestyle==2.10.0
 pycparser==2.21
 psycopg2-binary==2.8.6
 pyflakes==3.0.1
