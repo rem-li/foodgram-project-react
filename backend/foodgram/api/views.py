@@ -203,7 +203,7 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def get_me_data(self, request):
         """Getting user data."""
-        serializer = UserSerializer(request.user)
+        serializer = UserSerializer(request.user, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
