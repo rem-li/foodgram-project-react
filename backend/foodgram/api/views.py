@@ -13,6 +13,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from recepies.models import (Ingredient, Recipe, RecipeIngredient,
                              ShoppingList, Tag)
 from rest_framework import status, viewsets
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.generics import CreateAPIView
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
@@ -20,7 +21,6 @@ from rest_framework.permissions import (AllowAny, IsAuthenticated,
 from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import AccessToken
 from users.models import User
 
 
@@ -178,7 +178,8 @@ class UserReceiveTokenViewSet(CreateAPIView):
         if not user.check_password(password):
             message = {'password': 'Неверный пароль'}
             return Response(message, status=status.HTTP_400_BAD_REQUEST)
-        message = {'token': str(AccessToken.for_user(user))}
+        token, created = Token.objects.get_or_create(user=user)
+        message = {'token': token.key}
         return Response(message, status=status.HTTP_200_OK)
 
 

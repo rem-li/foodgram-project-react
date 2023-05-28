@@ -91,7 +91,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -110,17 +110,14 @@ DJOSER = {
     'USERNAME_RESET_CONFIRM_URL': '#/username/reset/confirm/{uid}/{token}',
     'SEND_ACTIVATION_EMAIL': False,
     'SEND_CONFIRMATION_EMAIL': True,
-    'TOKEN_MODEL': None,
+    'TOKEN_MODEL': 'rest_framework.authtoken.models.Token',
     'HIDE_USERS': False,
     'USER_ID_FIELD': 'id',
     'LOGIN_FIELD': 'email',
     'LOGOUT_ON_PASSWORD_CHANGE': True,
     'TOKEN_AUTHENTICATION_RULES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication'
+        'rest_framework.authentication.TokenAuthentication'
     ],
-    'JWT_AUTH_COOKIE': 'access_token',
-    'JWT_AUTH_REFRESH_COOKIE': 'refresh_token',
-    'JWT_AUTH_HEADER_PREFIX': 'Bearer',
 }
 
 
