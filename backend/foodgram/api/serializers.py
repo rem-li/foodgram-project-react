@@ -95,8 +95,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 class RecipeCreateSerializer(serializers.ModelSerializer):
     ingredients = IngredientAmountSerializer(many=True, required=True)
     tags = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Tag.objects.all(),
-        required=False
+        many=True, queryset=Tag.objects.all()
         )
     image = serializers.ImageField(required=False, allow_null=True)
 
