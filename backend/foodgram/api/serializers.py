@@ -209,7 +209,9 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
         return False
 
     def to_representation(self, instance):
+        data = super().to_representation(instance)
         subscribed_users = self.context['request'].user.subscriptions.all()
         subscribed_recipes = Recipe.objects.filter(author__in=subscribed_users)
-        instance.recipes = subscribed_recipes.filter(author=instance)
-        return super().to_representation(instance)
+        subscription_recipes_data = SubscriptionRecipeSerializer(subscribed_recipes, many=True).data
+        data['recipes'] = subscription_recipes_data
+        return dict(data)
