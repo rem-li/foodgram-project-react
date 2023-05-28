@@ -82,7 +82,7 @@ class RecipeSerializer(serializers.ModelSerializer):
                 'amount': ingredient.amount,
             }
             for recipe_ingredient in queryset
-            for ingredient in [recipe_ingredient.recipeingredient]
+            for ingredient in [recipe_ingredient.ingredients]
         ]
 
     def get_is_favorited(self, obj):
