@@ -1,8 +1,7 @@
 from api.views import (IngredientViewSet, RecipeViewSet, SetPasswordView,
                        ShoppingCartDownloadView, ShoppingListViewSet,
                        TagViewSet, UserDeleteTokenViewSet,
-                       UserReceiveTokenViewSet, UserSubscriptionsView,
-                       UserViewSet)
+                       UserSubscriptionsView, UserViewSet)
 from django.urls import include, path
 from rest_framework import routers
 from rest_framework_simplejwt.views import TokenObtainPairView
