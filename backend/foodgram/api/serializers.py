@@ -6,6 +6,7 @@ from users.models import User
 
 
 class IngredientSerializer(serializers.ModelSerializer):
+    measurement_unit = serializers.CharField(source='units')
 
     class Meta:
         model = Ingredient
@@ -30,6 +31,7 @@ class IngredientAmountSerializer(serializers.ModelSerializer):
 
 
 class TagSerializer(serializers.ModelSerializer):
+    color = serializers.CharField(source='hexcolor')
 
     class Meta:
         model = Tag
