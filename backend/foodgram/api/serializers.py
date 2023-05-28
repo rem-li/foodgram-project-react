@@ -56,6 +56,8 @@ class RecipeSerializer(serializers.ModelSerializer):
     is_in_shopping_cart = serializers.SerializerMethodField()
 
     def get_is_favorited(self, obj):
+        if not self.context['request'].user.is_authenticated:
+            return False
         user = self.context['request'].user
         return user.favorite_recipes.filter(pk=obj.pk).exists()
 
