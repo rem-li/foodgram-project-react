@@ -253,7 +253,8 @@ class UserSubscriptionsView(APIView):
         user = request.user
         subscriptions = user.subscriptions.all()
         if not subscriptions:
-            return Response([])
+            response_data = {'users': [], 'recipes': []}
+            return Response(response_data)
         recipes = Recipe.objects.filter(
             author__in=subscriptions
         ).prefetch_related('tags')
