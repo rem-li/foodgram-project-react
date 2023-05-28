@@ -192,7 +192,6 @@ class SubscriptionRecipeSerializer(serializers.ModelSerializer):
 
 
 class UserSubscriptionSerializer(serializers.ModelSerializer):
-    recipes = SubscriptionRecipeSerializer(many=True)
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
