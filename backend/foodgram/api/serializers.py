@@ -6,6 +6,20 @@ from rest_framework import serializers
 from users.models import User
 
 
+class UserSerializer(serializers.ModelSerializer):
+    is_subscribed = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'is_subscribed'
+            )
+
+    def get_is_subscribed(self, obj):
+        current_user = self.context.get('request').user
+        return current_user.is_subscribed_to(obj)
+
+
 class IngredientSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -49,11 +63,22 @@ class TagSerializer(serializers.ModelSerializer):
 class RecipeSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True)
     author = UserSerializer()
-    ingredients = RecipeIngredientSerializer(
-        source='recipeingredient_set', many=True
-        )
+    ingredients = serializers.SerializerMethodField()
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
+
+    def get_ingredients(self, obj):
+        queryset = obj.ingredients.all()
+        return [
+            {
+                'id': ingredient.id,
+                'name': ingredient.name,
+                'measurement_unit': ingredient.units,
+                'amount': recipe_ingredient.amount,
+            }
+            for recipe_ingredient in queryset
+            for ingredient in [recipe_ingredient.ingredient]
+        ]
 
     def get_is_favorited(self, obj):
         if not self.context['request'].user.is_authenticated:
@@ -132,20 +157,6 @@ class ShoppingListSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShoppingList
         fields = ('id', 'recipe', 'user')
-
-
-class UserSerializer(serializers.ModelSerializer):
-    is_subscribed = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = User
-        fields = (
-            'username', 'email', 'first_name', 'last_name', 'is_subscribed'
-            )
-
-    def get_is_subscribed(self, obj):
-        current_user = self.context.get('request').user
-        return current_user.is_subscribed_to(obj)
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
