@@ -30,15 +30,6 @@ class IngredientAmountSerializer(serializers.ModelSerializer):
         return super().to_internal_value(data)
 
 
-class RecipeIngredientSerializer(serializers.ModelSerializer):
-    ingredients = IngredientSerializer()
-    amount = serializers.FloatField()
-
-    class Meta:
-        model = RecipeIngredient
-        fields = ('ingredients', 'amount')
-
-
 class TagSerializer(serializers.ModelSerializer):
 
     class Meta:
