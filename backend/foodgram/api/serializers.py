@@ -212,10 +212,9 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
         author = self.context.get('author')
         if author is not None:
             recipes = Recipe.objects.filter(author=author)
-            serialized_recipes = SubscriptionRecipeSerializer(
+            return SubscriptionRecipeSerializer(
                 recipes, many=True
             ).data
-            return serialized_recipes
         return []
 
     def to_representation(self, instance):
