@@ -5,8 +5,6 @@ from api.views import (IngredientViewSet, RecipeViewSet, SetPasswordView,
                        UserViewSet)
 from django.urls import include, path
 from rest_framework import routers
-
-
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 router = routers.DefaultRouter()
