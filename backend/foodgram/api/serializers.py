@@ -193,6 +193,7 @@ class SubscriptionRecipeSerializer(serializers.ModelSerializer):
 
 class UserSubscriptionSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
+    recipes = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -206,6 +207,16 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
         if user.is_authenticated:
             return user.is_subscribed_to(obj)
         return False
+
+    def get_recipes(self, obj):
+        author = self.context.get('author')
+        if author is not None:
+            recipes = Recipe.objects.filter(author=author)
+            serialized_recipes = SubscriptionRecipeSerializer(
+                recipes, many=True
+            ).data
+            return serialized_recipes
+        return []
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
