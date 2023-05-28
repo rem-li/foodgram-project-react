@@ -43,8 +43,7 @@ class UserSerializer(serializers.ModelSerializer):
     def get_is_subscribed(self, obj):
         user = self.context.get('request').user
         if user.is_authenticated:
-            if hasattr(user, 'is_subscribed_to') and callable(user.is_subscribed_to):
-                return user.is_subscribed_to(obj)
+            return user.is_subscribed_to(obj)
         return False
 
     class Meta:
