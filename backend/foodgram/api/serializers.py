@@ -76,9 +76,9 @@ class RecipeSerializer(serializers.ModelSerializer):
         queryset = obj.ingredients.through.objects.filter(recipe=obj)
         return [
             {
-                'id': ingredient.ingredient.id,
-                'name': ingredient.ingredient.name,
-                'measurement_unit': ingredient.ingredient.units,
+                'id': ingredient.ingredients.id,
+                'name': ingredient.ingredients.name,
+                'measurement_unit': ingredient.ingredients.units,
                 'amount': ingredient.amount,
             }
             for recipe_ingredient in queryset
