@@ -73,7 +73,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             detail=True, methods=['POST', 'DELETE'],
             url_path='favorite', url_name='recipe_favorite'
             )
-    @permission_classes(IsAuthenticated)
+    @permission_classes((IsAuthenticated,))
     def favorite(self, request, pk=None):
         recipe = self.get_object()
         user = request.user
