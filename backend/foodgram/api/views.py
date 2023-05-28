@@ -88,16 +88,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
         data = {'is_favorited': is_favorited}
         favorite_recipes = user.favorite_recipes.all()
         serializer = RecipeSerializer(
-            favorite_recipes,
-            data=data,
-            partial=True,
-            context={'request': request}
+                favorite_recipes,
+                many=True,
+                context={'request': request}
+                serializer.is_valid(raise_exception=True)
         )
-        serializer.is_valid(raise_exception=True)
         serializer.save()
         if is_favorited:
             return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response({}, status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            {}, status=status.HTTP_204_NO_CONTENT
+                )
 
 
 class ShoppingListViewSet(viewsets.ModelViewSet):
