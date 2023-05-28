@@ -33,71 +33,71 @@ class IngredientViewSet(viewsets.ModelViewSet):
     serializer_class = IngredientSerializer
 
 
-class RecipeViewSet(viewsets.ModelViewSet):
-    serializer_class = RecipeSerializer
-    ordering_fields = ('pub_date',)
-    queryset = Recipe.objects.all().order_by('id')
-    filter_backends = [DjangoFilterBackend]
-    filterset_class = RecipeFilter
-    permission_classes = [IsRecipeAuthor]
+    class RecipeViewSet(viewsets.ModelViewSet):
+        serializer_class = RecipeSerializer
+        ordering_fields = ('pub_date',)
+        queryset = Recipe.objects.all().order_by('id')
+        filter_backends = [DjangoFilterBackend]
+        filterset_class = RecipeFilter
+        permission_classes = [IsRecipeAuthor]
 
-    def get_serializer_class(self):
-        if self.action == 'create':
-            return RecipeCreateSerializer
-        return RecipeSerializer
+        def get_serializer_class(self):
+            if self.action == 'create':
+                return RecipeCreateSerializer
+            return RecipeSerializer
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        def perform_create(self, serializer):
+            serializer.save(author=self.request.user)
 
-    def retrieve(self, request, pk=None):
-        recipe = get_object_or_404(Recipe, pk=pk)
-        serializer = RecipeSerializer(
-            instance=recipe,
-            context={'request': request}
-        )
-        return Response(serializer.data)
+        def retrieve(self, request, pk=None):
+            recipe = get_object_or_404(Recipe, pk=pk)
+            serializer = RecipeSerializer(
+                instance=recipe,
+                context={'request': request}
+            )
+            return Response(serializer.data)
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        if self.request.user.is_authenticated:
-            queryset = queryset.annotate(
-                is_favorited=Exists(
-                    self.request.user.favorite_recipes.filter(
-                        pk=OuterRef('pk')
+        def get_queryset(self):
+            queryset = super().get_queryset()
+            if self.request.user.is_authenticated:
+                queryset = queryset.annotate(
+                    is_favorited=Exists(
+                        self.request.user.favorite_recipes.filter(
+                            pk=OuterRef('pk')
+                        )
                     )
                 )
-            )
-        return queryset.order_by('-pub_date')
+            return queryset.order_by('-pub_date')
 
-    @action(
-            detail=True, methods=['POST', 'DELETE'],
-            url_path='favorite', url_name='recipe_favorite'
-            )
-    def favorite(self, request, pk=None):
-        recipe = self.get_object()
-        user = request.user
-        if request.method == 'POST':
-            user.favorite_recipes.add(recipe)
-            is_favorited = True
-        elif request.method == 'DELETE':
-            user.favorite_recipes.remove(recipe)
-            is_favorited = False
-        cache.delete(f'user:{user.pk}:favorite_recipes')
-        cache.delete(f'recipe:{recipe.pk}:is_favorited')
-        data = {'is_favorited': is_favorited}
-        serializer = RecipeSerializer(
-            instance=recipe,
-            data=data,
-            partial=True,
-            context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        if is_favorited:
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(
-            serializer.data, status=status.HTTP_204_NO_CONTENT
+        @action(
+                detail=True, methods=['POST', 'DELETE'],
+                url_path='favorite', url_name='recipe_favorite'
                 )
+        def favorite(self, request, pk=None):
+            recipe = self.get_object()
+            user = request.user
+            if request.method == 'POST':
+                user.favorite_recipes.add(recipe)
+                is_favorited = True
+            elif request.method == 'DELETE':
+                user.favorite_recipes.remove(recipe)
+                is_favorited = False
+            cache.delete(f'user:{user.pk}:favorite_recipes')
+            cache.delete(f'recipe:{recipe.pk}:is_favorited')
+            data = {'is_favorited': is_favorited}
+            serializer = RecipeSerializer(
+                instance=recipe,
+                data=data,
+                partial=True,
+                context={'request': request}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            if is_favorited:
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            # return Response(
+            #     serializer.data, status=status.HTTP_204_NO_CONTENT
+            #         )
 
 
 class ShoppingListViewSet(viewsets.ModelViewSet):
@@ -249,9 +249,6 @@ class UserSubscriptionsView(APIView):
     def get(self, request):
         user = request.user
         subscriptions = user.subscriptions.all()
-        if not subscriptions.exists():
-            response_data = {'users': [], 'recipes': []}
-            return Response(response_data)
         recipes = Recipe.objects.filter(
             author__in=subscriptions
         ).prefetch_related('tags')
