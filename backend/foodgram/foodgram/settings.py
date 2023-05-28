@@ -91,7 +91,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -116,11 +116,11 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
     'LOGOUT_ON_PASSWORD_CHANGE': True,
     'TOKEN_AUTHENTICATION_RULES': [
-        'rest_framework.authentication.TokenAuthentication'
+        'rest_framework_simplejwt.authentication.JWTAuthentication'
     ],
-    # 'JWT_AUTH_COOKIE': 'access_token',
-    # 'JWT_AUTH_REFRESH_COOKIE': 'refresh_token',
-    # 'JWT_AUTH_HEADER_PREFIX': 'Bearer',
+    'JWT_AUTH_COOKIE': 'access_token',
+    'JWT_AUTH_REFRESH_COOKIE': 'refresh_token',
+    'JWT_AUTH_HEADER_PREFIX': 'Bearer',
 }
 
 

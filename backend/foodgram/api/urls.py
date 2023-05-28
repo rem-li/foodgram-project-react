@@ -6,6 +6,12 @@ from api.views import (IngredientViewSet, RecipeViewSet, SetPasswordView,
 from django.urls import include, path
 from rest_framework import routers
 
+
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+
 router = routers.DefaultRouter()
 router.register('users', UserViewSet, basename='users')
 router.register('tags', TagViewSet, basename='tags')
@@ -23,7 +29,7 @@ user_urls = [path(
     UserSubscriptionsView.as_view(), name='user_subscribe'
     )]
 
-auth_urls = [path('login/', UserReceiveTokenViewSet.as_view(), name='login'),
+auth_urls = [path('login/', TokenObtainPairView.as_view(), name='login'),
              path('logout/', UserDeleteTokenViewSet.as_view(), name='logout')]
 
 urlpatterns = [path('users/', include(user_urls)),
