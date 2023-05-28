@@ -95,9 +95,9 @@ class IngredientViewSet(viewsets.ModelViewSet):
             serializer.save()
             if is_favorited:
                 return Response(serializer.data, status=status.HTTP_200_OK)
-            # return Response(
-            #     serializer.data, status=status.HTTP_204_NO_CONTENT
-            #         )
+            return Response(
+                {}, status=status.HTTP_204_NO_CONTENT
+                    )
 
 
 class ShoppingListViewSet(viewsets.ModelViewSet):
