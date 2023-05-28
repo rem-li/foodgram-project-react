@@ -268,11 +268,11 @@ class UserSubscriptionsView(APIView):
         if target_user == user:
             return Response({'error': 'Invalid target user'}, status=400)
         serializer = UserSerializer(user, context={'request': request})
-        target_user_with_count = User.objects.annotate(
-            recipes_count=Count('recipes')
-        ).get(id=target_user.id)
+        target_user_recipe_count = Recipe.objects.filter(
+            author=target_user
+        ).count()
         serializer = UserSerializer(
-            target_user_with_count, context={'request': request}
+            target_user_recipe_count, context={'request': request}
         )
         user.subscribe_to_user(target_user)
         serializer_data = serializer.data
