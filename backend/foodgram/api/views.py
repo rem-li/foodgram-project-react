@@ -242,7 +242,9 @@ class UserSubscriptionsView(APIView):
     def get(self, request):
         user = request.user
         subscriptions = user.subscriptions.all()
-        serializer = UserSubscriptionSerializer(subscriptions, many=True, context={'request': request})
+        serializer = UserSubscriptionSerializer(
+            subscriptions, many=True, context={'request': request}
+        )
         response_data = serializer.data
         return Response(response_data)
 
@@ -251,7 +253,9 @@ class UserSubscriptionsView(APIView):
         user = request.user
         if target_user == user:
             return Response({'error': 'Invalid target user'}, status=400)
-        serializer = UserSubscriptionSerializer(user, context={'request': request})
+        serializer = UserSubscriptionSerializer(
+            user, context={'request': request}
+        )
         recipes_count = Recipe.objects.filter(
             author=target_user
         ).count()
