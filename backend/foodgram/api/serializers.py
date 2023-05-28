@@ -188,7 +188,7 @@ class SetPasswordSerializer(serializers.Serializer):
 class SubscriptionRecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
-        fields = ['id', 'name', 'image', 'cooking_time']
+        fields = ('id', 'name', 'image', 'cooking_time')
 
 
 class UserSubscriptionSerializer(serializers.ModelSerializer):
@@ -196,7 +196,10 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'username', 'first_name', 'last_name', 'is_subscribed', 'recipes']
+        fields = (
+            'id', 'email', 'username', 'first_name',
+            'last_name', 'is_subscribed', 'recipes'
+        )
 
     def to_representation(self, instance):
         subscribed_users = self.context['request'].user.subscriptions.all()
