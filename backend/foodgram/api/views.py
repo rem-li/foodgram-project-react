@@ -16,8 +16,7 @@ from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.generics import CreateAPIView
-from rest_framework.permissions import (AllowAny, IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED
 from rest_framework.views import APIView
@@ -250,7 +249,7 @@ class UserSubscriptionsView(APIView):
     def get(self, request):
         user = request.user
         subscriptions = user.subscriptions.all()
-        if not subscriptions:
+        if not subscriptions.exists():
             response_data = {'users': [], 'recipes': []}
             return Response(response_data)
         recipes = Recipe.objects.filter(
