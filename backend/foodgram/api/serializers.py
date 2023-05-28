@@ -1,5 +1,5 @@
 from django.db import transaction
-from djoser.serializers import UserSerializer
+# from djoser.serializers import UserSerializer
 from recepies.models import (Ingredient, Recipe, RecipeIngredient,
                              ShoppingList, Tag)
 from rest_framework import serializers
@@ -44,7 +44,6 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = '__all__'
-
 
 
 class UserSerializer(serializers.ModelSerializer):
