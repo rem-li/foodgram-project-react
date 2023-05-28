@@ -241,7 +241,10 @@ class UserSubscriptionsView(APIView):
 
     def get(self, request):
         user = request.user
-        subscriptions = user.subscriptions.all()
+        try:
+            subscriptions = user.subscriptions.all()
+        except AttributeError:
+            subscriptions = []
         serializer = UserSubscriptionSerializer(
             subscriptions, many=True, context={'request': request}
         )
