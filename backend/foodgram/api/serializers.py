@@ -6,20 +6,6 @@ from rest_framework import serializers
 from users.models import User
 
 
-class UserSerializer(serializers.ModelSerializer):
-    is_subscribed = serializers.SerializerMethodField(read_only=True)
-
-    class Meta:
-        model = User
-        fields = (
-            'username', 'email', 'first_name', 'last_name', 'is_subscribed'
-            )
-
-    def get_is_subscribed(self, obj):
-        current_user = self.context.get('request').user
-        return current_user.is_subscribed_to(obj)
-
-
 class IngredientSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -58,6 +44,21 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = '__all__'
+
+
+
+class UserSerializer(serializers.ModelSerializer):
+    is_subscribed = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'is_subscribed'
+            )
+
+    def get_is_subscribed(self, obj):
+        current_user = self.context.get('request').user
+        return current_user.is_subscribed_to(obj)
 
 
 class RecipeSerializer(serializers.ModelSerializer):
