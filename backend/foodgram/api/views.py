@@ -5,7 +5,6 @@ from api.serializers import (IngredientSerializer, RecipeCreateSerializer,
                              ShoppingListSerializer, TagSerializer,
                              UserCreateSerializer, UserRecieveTokenSerializer,
                              UserSerializer)
-from django.core.cache import cache
 from django.db.models import Exists, F, OuterRef, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -81,10 +80,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = request.user
         if request.method == 'POST':
             user.favorite_recipes.add(recipe)
-            is_favorited = True
         elif request.method == 'DELETE':
             user.favorite_recipes.remove(recipe)
-            is_favorited = False
         favorite_recipes = user.favorite_recipes.all()
         serializer = RecipeSerializer(
                 favorite_recipes,
