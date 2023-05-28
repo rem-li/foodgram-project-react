@@ -212,6 +212,8 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         subscribed_authors = instance.subscriptions.all()
         recipes = Recipe.objects.filter(author__in=subscribed_authors)
-        serialized_recipes = SubscriptionRecipeSerializer(recipes, many=True).data
+        serialized_recipes = SubscriptionRecipeSerializer(
+            recipes, many=True
+        ).data
         data['recipes'] = serialized_recipes
         return data
