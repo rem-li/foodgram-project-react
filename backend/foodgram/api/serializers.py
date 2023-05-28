@@ -49,12 +49,6 @@ class TagSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField(read_only=True)
 
-    class Meta:
-        model = User
-        fields = (
-            'username', 'email', 'first_name', 'last_name', 'is_subscribed'
-            )
-
     def get_is_subscribed(self, obj):
         if not self.context['request'].user.is_authenticated:
             return False
@@ -63,6 +57,12 @@ class UserSerializer(serializers.ModelSerializer):
             if callable(user.is_subscribed_to):
                 return user.is_subscribed_to(obj)
         return False
+
+    class Meta:
+        model = User
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'is_subscribed'
+            )
 
 
 class RecipeSerializer(serializers.ModelSerializer):
