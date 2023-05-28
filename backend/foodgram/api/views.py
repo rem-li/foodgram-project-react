@@ -188,7 +188,7 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return UserCreateSerializer
-        return UserSerializer(context={'request': self.request})
+        return UserSerializer
 
     @action(
         detail=False,
