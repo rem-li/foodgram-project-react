@@ -93,8 +93,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 many=True,
                 context={'request': request}
         )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
         if is_favorited:
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(
