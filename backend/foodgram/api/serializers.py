@@ -56,6 +56,8 @@ class UserSerializer(serializers.ModelSerializer):
             )
 
     def get_is_subscribed(self, obj):
+        if not self.context['request'].user.is_authenticated:
+            return False
         current_user = self.context.get('request').user
         return current_user.is_subscribed_to(obj)
 
