@@ -179,7 +179,7 @@ class UserReceiveTokenViewSet(CreateAPIView):
             message = {'password': 'Неверный пароль'}
             return Response(message, status=status.HTTP_400_BAD_REQUEST)
         token, created = Token.objects.get_or_create(user=user)
-        message = {'token': str(token.key)}
+        message = {'auth_token': str(token.key)}
         return Response(message, status=status.HTTP_200_OK)
 
 
