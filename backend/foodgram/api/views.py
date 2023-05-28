@@ -85,14 +85,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
             is_favorited = False
         cache.delete(f'user:{user.pk}:favorite_recipes')
         cache.delete(f'recipe:{recipe.pk}:is_favorited')
-        data = {'is_favorited': is_favorited}
         favorite_recipes = user.favorite_recipes.all()
         serializer = RecipeSerializer(
                 favorite_recipes,
                 many=True,
                 context={'request': request}
-                serializer.is_valid(raise_exception=True)
         )
+        serializer.is_valid(raise_exception=True)
         serializer.save()
         if is_favorited:
             return Response(serializer.data, status=status.HTTP_200_OK)
