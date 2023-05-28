@@ -71,7 +71,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(
             detail=True, methods=['POST', 'DELETE'],
-            url_path='favorite', url_name='recipe_favorite'
+            url_path='favorite', url_name='recipe_favorite',
             )
     def favorite(self, request, pk=None):
         self.permission_classes = [IsAuthenticated]
@@ -267,7 +267,7 @@ class UserSubscriptionsView(APIView):
         user = request.user
         if target_user == user:
             return Response({'error': 'Invalid target user'}, status=400)
-        serializer = UserSerializer(user, context={'target_user': target_user})
+        serializer = UserSerializer(user, context={'request': request})
         user.subscribe_to_user(target_user)
         serializer_data = serializer.data
         serializer_data['is_subscribed'] = True
@@ -279,7 +279,7 @@ class UserSubscriptionsView(APIView):
         if not user.is_subscribed_to(target_user):
             return Response({'error': 'User is not subscribed'}, status=400)
         user.unsubscribe_from_user(target_user)
-        serializer = UserSerializer(user, context={'target_user': target_user})
+        serializer = UserSerializer(user, context={'request': request})
         serializer_data = serializer.data
         serializer_data['is_subscribed'] = False
         return Response({'success': True, 'data': serializer_data})
