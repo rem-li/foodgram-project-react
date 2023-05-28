@@ -6,7 +6,7 @@ from api.serializers import (IngredientSerializer, RecipeCreateSerializer,
                              UserCreateSerializer, UserRecieveTokenSerializer,
                              UserSerializer)
 from django.core.cache import cache
-from django.db.models import Exists, F, OuterRef, Sum
+from django.db.models import Exists, F, OuterRef, Sum, Count
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -268,10 +268,16 @@ class UserSubscriptionsView(APIView):
         if target_user == user:
             return Response({'error': 'Invalid target user'}, status=400)
         serializer = UserSerializer(user, context={'request': request})
+        target_user_with_count = User.objects.annotate(
+            recipes_count=Count('recipes')
+        ).get(id=target_user.id)
+        serializer = UserSerializer(
+            target_user_with_count, context={'request': request}
+        )
         user.subscribe_to_user(target_user)
         serializer_data = serializer.data
         serializer_data['is_subscribed'] = True
-        return Response({'success': True, 'data': serializer_data})
+        return Response(serializer_data)
 
     def delete(self, request, user_id):
         user = request.user
@@ -279,7 +285,4 @@ class UserSubscriptionsView(APIView):
         if not user.is_subscribed_to(target_user):
             return Response({'error': 'User is not subscribed'}, status=400)
         user.unsubscribe_from_user(target_user)
-        serializer = UserSerializer(user, context={'request': request})
-        serializer_data = serializer.data
-        serializer_data['is_subscribed'] = False
-        return Response({'success': True, 'data': serializer_data})
+        return Response(status=204)
