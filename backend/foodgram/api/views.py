@@ -91,7 +91,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 many=True,
                 context={'request': request}
         )
-        serializer.is_valid(raise_exception=True)
         serializer.save()
         if is_favorited:
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -189,7 +188,7 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return UserCreateSerializer
-        return UserSerializer
+        return UserSerializer(context={'request': self.request})
 
     @action(
         detail=False,
