@@ -26,11 +26,13 @@ from users.models import User
 class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+    pagination_class = None
 
 
 class IngredientViewSet(viewsets.ModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+    pagination_class = None
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -268,13 +270,13 @@ class UserSubscriptionsView(APIView):
         if target_user == user:
             return Response({'error': 'Invalid target user'}, status=400)
         serializer = UserSerializer(user, context={'request': request})
-        target_user_recipe_count = Recipe.objects.filter(
+        recipes_count = Recipe.objects.filter(
             author=target_user
         ).count()
         user.subscribe_to_user(target_user)
         serializer_data = serializer.data
         serializer_data['is_subscribed'] = True
-        serializer_data['target_user_recipe_count'] = target_user_recipe_count
+        serializer_data['recipes_count'] = recipes_count
         return Response(serializer_data)
 
     def delete(self, request, user_id):
