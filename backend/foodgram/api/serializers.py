@@ -193,6 +193,7 @@ class SubscriptionRecipeSerializer(serializers.ModelSerializer):
 
 class UserSubscriptionSerializer(serializers.ModelSerializer):
     recipes = SubscriptionRecipeSerializer(many=True)
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -200,6 +201,12 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
             'id', 'email', 'username', 'first_name',
             'last_name', 'is_subscribed', 'recipes'
         )
+
+    def get_is_subscribed(self, obj):
+        user = self.context.get('request').user
+        if user.is_authenticated:
+            return user.is_subscribed_to(obj)
+        return False
 
     def to_representation(self, instance):
         subscribed_users = self.context['request'].user.subscriptions.all()
