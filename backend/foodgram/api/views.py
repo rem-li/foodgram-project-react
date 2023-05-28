@@ -271,12 +271,10 @@ class UserSubscriptionsView(APIView):
         target_user_recipe_count = Recipe.objects.filter(
             author=target_user
         ).count()
-        serializer = UserSerializer(
-            target_user_recipe_count, context={'request': request}
-        )
         user.subscribe_to_user(target_user)
         serializer_data = serializer.data
         serializer_data['is_subscribed'] = True
+        serializer_data['target_user_recipe_count'] = target_user_recipe_count
         return Response(serializer_data)
 
     def delete(self, request, user_id):
