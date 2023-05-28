@@ -73,6 +73,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             detail=True, methods=['POST', 'DELETE'],
             url_path='favorite', url_name='recipe_favorite'
             )
+    @permission_classes(IsAuthenticated)
     def favorite(self, request, pk=None):
         recipe = self.get_object()
         user = request.user
@@ -85,8 +86,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         cache.delete(f'user:{user.pk}:favorite_recipes')
         cache.delete(f'recipe:{recipe.pk}:is_favorited')
         data = {'is_favorited': is_favorited}
+        favorite_recipes = user.favorite_recipes.all()
         serializer = RecipeSerializer(
-            instance=recipe,
+            favorite_recipes,
             data=data,
             partial=True,
             context={'request': request}
@@ -95,9 +97,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer.save()
         if is_favorited:
             return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(
-            {}, status=status.HTTP_204_NO_CONTENT
-                )
+        return Response({}, status=status.HTTP_204_NO_CONTENT)
 
 
 class ShoppingListViewSet(viewsets.ModelViewSet):
