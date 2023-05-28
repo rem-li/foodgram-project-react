@@ -185,10 +185,13 @@ class UserViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'patch', 'post', 'delete']
     permission_classes = [IsCreateOnly]
 
-    def get_serializer_class(self):
+    def get_serializer(self, *args, **kwargs):
         if self.request.method == 'POST':
-            return UserCreateSerializer
-        return UserSerializer
+            serializer_class = UserCreateSerializer
+        else:
+            serializer_class = UserSerializer
+        kwargs['context'] = {'request': self.request}
+        return serializer_class(*args, **kwargs)
 
     @action(
         detail=False,
