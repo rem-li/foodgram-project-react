@@ -183,3 +183,23 @@ class UserRecieveTokenSerializer(serializers.Serializer):
 class SetPasswordSerializer(serializers.Serializer):
     current_password = serializers.CharField(max_length=128)
     new_password = serializers.CharField(max_length=128)
+
+
+class SubscriptionRecipeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = ['id', 'name', 'image', 'cooking_time']
+
+
+class UserSubscriptionSerializer(serializers.ModelSerializer):
+    recipes = SubscriptionRecipeSerializer(many=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'username', 'first_name', 'last_name', 'is_subscribed', 'recipes']
+
+    def to_representation(self, instance):
+        subscribed_users = self.context['request'].user.subscriptions.all()
+        subscribed_recipes = Recipe.objects.filter(author__in=subscribed_users)
+        instance.recipes = subscribed_recipes.filter(author=instance)
+        return super().to_representation(instance)

@@ -4,7 +4,7 @@ from api.serializers import (IngredientSerializer, RecipeCreateSerializer,
                              RecipeSerializer, SetPasswordSerializer,
                              ShoppingListSerializer, TagSerializer,
                              UserCreateSerializer, UserRecieveTokenSerializer,
-                             UserSerializer)
+                             UserSerializer, UserSubscriptionSerializer)
 from django.db.models import Exists, F, OuterRef, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -238,20 +238,12 @@ class SetPasswordView(APIView):
 
 
 class UserSubscriptionsView(APIView):
-    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         user = request.user
         subscriptions = user.subscriptions.all()
-        recipes = Recipe.objects.filter(
-            author__in=subscriptions
-        ).prefetch_related('tags')
-        serializer = RecipeSerializer(recipes, many=True)
-        recipes_data = serializer.data
-        serializer = UserSerializer(
-            subscriptions, many=True, context={'request': request}
-        )
-        response_data = {'users': serializer.data, 'recipes': recipes_data}
+        serializer = UserSubscriptionSerializer(subscriptions, many=True, context={'request': request})
+        response_data = serializer.data
         return Response(response_data)
 
     def post(self, request, user_id):
@@ -259,7 +251,7 @@ class UserSubscriptionsView(APIView):
         user = request.user
         if target_user == user:
             return Response({'error': 'Invalid target user'}, status=400)
-        serializer = UserSerializer(user, context={'request': request})
+        serializer = UserSubscriptionSerializer(user, context={'request': request})
         recipes_count = Recipe.objects.filter(
             author=target_user
         ).count()
