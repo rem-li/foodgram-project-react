@@ -73,16 +73,16 @@ class RecipeSerializer(serializers.ModelSerializer):
     is_in_shopping_cart = serializers.SerializerMethodField()
 
     def get_ingredients(self, obj):
-        queryset = obj.ingredients.all()
+        queryset = obj.ingredients.through.objects.filter(recipe=obj)
         return [
             {
-                'id': ingredient.id,
-                'name': ingredient.name,
-                'measurement_unit': ingredient.units,
-                'amount': recipe_ingredient.amount,
+                'id': ingredient.ingredient.id,
+                'name': ingredient.ingredient.name,
+                'measurement_unit': ingredient.ingredient.units,
+                'amount': ingredient.amount,
             }
             for recipe_ingredient in queryset
-            for ingredient in [recipe_ingredient.ingredient]
+            for ingredient in [recipe_ingredient.recipeingredient]
         ]
 
     def get_is_favorited(self, obj):
