@@ -59,7 +59,9 @@ class UserSerializer(serializers.ModelSerializer):
         if not self.context['request'].user.is_authenticated:
             return False
         current_user = self.context.get('request').user
-        return current_user.is_subscribed_to(obj)
+        if hasattr(current_user, 'is_subscribed_to'):
+            return current_user.is_subscribed_to(obj)
+        return False
 
 
 class RecipeSerializer(serializers.ModelSerializer):
