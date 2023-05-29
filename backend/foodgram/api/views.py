@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from recepies.models import (Ingredient, Recipe, RecipeIngredient,
                              ShoppingList, Tag)
-from rest_framework import SearchFilter, status, viewsets
+from rest_framework import filters, status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.generics import CreateAPIView
@@ -34,7 +34,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     pagination_class = None
     permission_classes = [AllowAny]
-    filter_backends = [SearchFilter]
+    filter_backends = [filters.SearchFilter]
     search_fields = ['name']
 
 
