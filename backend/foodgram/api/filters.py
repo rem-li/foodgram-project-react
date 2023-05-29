@@ -1,4 +1,5 @@
 import django_filters
+from django.db.models import Case, When, Value, IntegerField
 from recepies.models import Recipe, Tag
 
 
@@ -28,10 +29,12 @@ class RecipeFilter(django_filters.FilterSet):
 
     def filter_is_favorited(self, queryset, name, value):
         is_favorited = self.serializer.data.get('is_favorited')
-        return self.serializer.filter_is_favorited(queryset, is_favorited)
+        if is_favorited:
+            return 1
+        return 0
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
         is_in_shopping_cart = self.serializer.data.get('is_in_shopping_cart')
-        return self.serializer.filter_is_in_shopping_cart(
-            queryset, is_in_shopping_cart
-        )
+        if is_in_shopping_cart:
+            return 1
+        return 0
