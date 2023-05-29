@@ -8,7 +8,7 @@ from api.serializers import (IngredientSerializer, RecipeCreateSerializer,
 from django.db.models import Exists, F, OuterRef, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
+from django_filters.rest_framework import DjangoFilterBackend, SearchFilter
 from recepies.models import (Ingredient, Recipe, RecipeIngredient,
                              ShoppingList, Tag)
 from rest_framework import status, viewsets
@@ -34,6 +34,8 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     pagination_class = None
     permission_classes = [AllowAny]
+    filter_backends = [SearchFilter]
+    search_fields = ['name']
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -60,17 +62,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
         return Response(serializer.data)
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        if self.request.user.is_authenticated:
-            queryset = queryset.annotate(
-                is_favorited=Exists(
-                    self.request.user.favorite_recipes.filter(
-                        pk=OuterRef('pk')
-                    )
-                )
-            )
-        return queryset.order_by('-pub_date')
+    # def get_queryset(self):
+    #     queryset = super().get_queryset()
+    #     if self.request.user.is_authenticated:
+    #         queryset = queryset.annotate(
+    #             is_favorited=Exists(
+    #                 self.request.user.favorite_recipes.filter(
+    #                     pk=OuterRef('pk')
+    #                 )
+    #             )
+    #         )
+    #     return queryset.order_by('-pub_date')
 
     @action(
             detail=True, methods=['POST', 'DELETE'],
