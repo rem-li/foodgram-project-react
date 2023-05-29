@@ -274,7 +274,9 @@ class UserSubscriptionsView(APIView):
                 ] == user_id), 0
             )
             user_data['recipes_count'] = recipe_count
-        return Response(serializer_data)
+        return self.pagination_class().paginate_queryset(
+            serializer_data, request, view=self
+        )
 
     def post(self, request, user_id):
         target_user = get_object_or_404(User, id=user_id)
