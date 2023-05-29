@@ -1,11 +1,11 @@
 from api.filters import RecipeFilter
 from api.permissions import IsCreateOnly, IsRecipeAuthor
 from api.serializers import (IngredientSerializer, RecipeCreateSerializer,
-                             RecipeSerializer, SetPasswordSerializer,
-                             ShoppingListSerializer, TagSerializer,
-                             UserCreateSerializer, UserRecieveTokenSerializer,
-                             UserSerializer, UserSubscriptionSerializer,
-                             RecipeShortSerializer)
+                             RecipeSerializer, RecipeShortSerializer,
+                             SetPasswordSerializer, ShoppingListSerializer,
+                             TagSerializer, UserCreateSerializer,
+                             UserRecieveTokenSerializer, UserSerializer,
+                             UserSubscriptionSerializer)
 from django.db.models import F, Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -55,7 +55,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeCreateSerializer
         elif self.action == 'favorite':
             return RecipeShortSerializer
-        return RecipeSerializer
+        else:
+            return RecipeSerializer
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -94,11 +95,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = request.user
         if request.method == 'POST':
             user.favorite_recipes.add(recipe)
-            serializer = RecipeSerializer(instance=recipe, context={'request': request})
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        elif request.method == 'DELETE':
-            user.favorite_recipes.remove(recipe)
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            serializer = RecipeSerializer(
+                instance=recipe, context={'request': request}
+            )
+            return Response(
+                serializer.data, status=status.HTTP_201_CREATED
+            )
+        user.favorite_recipes.remove(recipe)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ShoppingListViewSet(viewsets.ModelViewSet):
