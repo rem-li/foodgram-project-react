@@ -274,8 +274,8 @@ class UserSubscriptionsView(APIView):
                 ] == user_id), 0
             )
             user_data['recipes_count'] = recipe_count
-        return self.pagination_class().paginate_queryset(
-            serializer_data, request, view=self
+        return self.pagination_class().get_paginated_response(
+            serializer_data
         )
 
     def post(self, request, user_id):
