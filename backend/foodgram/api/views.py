@@ -247,6 +247,7 @@ class UserSubscriptionsView(APIView):
             subscriptions = []
         serializer = UserSubscriptionSerializer(
             subscriptions, many=True,
+            context={'request': request}
         )
         response_data = serializer.data
         return Response(response_data)
