@@ -209,9 +209,9 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
         return False
 
     def get_recipes(self, obj):
-        author = self.context.get('author')
-        if author is not None:
-            recipes = Recipe.objects.filter(author=author)
+        user_id = self.context.get('id')
+        if user_id is not None:
+            recipes = Recipe.objects.filter(author__id=user_id)
             return SubscriptionRecipeSerializer(
                 recipes, many=True
             ).data
