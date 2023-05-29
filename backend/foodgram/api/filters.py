@@ -1,5 +1,4 @@
 import django_filters
-from django.db.models import Case, When, Value, IntegerField
 from recepies.models import Recipe, Tag
 
 
