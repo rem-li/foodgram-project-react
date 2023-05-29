@@ -95,6 +95,12 @@ class RecipeSerializer(serializers.ModelSerializer):
             )
 
 
+class RecipeShortSerializer(RecipeSerializer):
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+
 class RecipeCreateSerializer(serializers.ModelSerializer):
     ingredients = IngredientAmountSerializer(many=True, required=True)
     tags = serializers.PrimaryKeyRelatedField(
