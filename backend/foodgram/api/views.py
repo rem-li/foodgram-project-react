@@ -8,7 +8,8 @@ from api.serializers import (IngredientSerializer, RecipeCreateSerializer,
 from django.db.models import F, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend, SearchFilter
+from django_filters import SearchFilter
+from django_filters.rest_framework import DjangoFilterBackend
 from recepies.models import (Ingredient, Recipe, RecipeIngredient,
                              ShoppingList, Tag)
 from rest_framework import status, viewsets
