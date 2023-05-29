@@ -266,8 +266,11 @@ class UserSubscriptionsView(APIView):
             user_id = user_data['id']
             recipe_count = next(
                 (
-                item['count'] for item in recipes_count
-                if item['author'] == user_id
+                item[
+                    'count'
+                ] for item in recipes_count if item[
+                    'author'
+                ] == user_id
                 ), 0
             )
             user_data['recipes_count'] = recipe_count
