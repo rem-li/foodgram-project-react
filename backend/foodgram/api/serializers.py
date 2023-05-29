@@ -194,6 +194,7 @@ class SubscriptionRecipeSerializer(serializers.ModelSerializer):
 class UserSubscriptionSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -210,19 +211,12 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
 
     def get_recipes(self, obj):
         user_id = self.context.get('id')
-        if user_id is not None:
-            recipes = Recipe.objects.filter(author__id=user_id)
-            return SubscriptionRecipeSerializer(
+        recipes = Recipe.objects.filter(author__id=user_id)
+        return SubscriptionRecipeSerializer(
                 recipes, many=True
             ).data
-        return []
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        subscribed_authors = instance.subscriptions.all()
-        recipes = Recipe.objects.filter(author__in=subscribed_authors)
-        serialized_recipes = SubscriptionRecipeSerializer(
-            recipes, many=True
-        ).data
-        data['recipes'] = serialized_recipes
-        return data
+    def get_recipes_count(self, obj):
+        user_id = self.context.get('id')
+        count = Recipe.objects.filter(author__id=user_id).count()
+        return count
