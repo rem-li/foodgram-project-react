@@ -32,4 +32,6 @@ class RecipeFilter(django_filters.FilterSet):
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
         is_in_shopping_cart = self.serializer.data.get('is_in_shopping_cart')
-        return self.serializer.filter_is_in_shopping_cart(queryset, is_in_shopping_cart)
+        return self.serializer.filter_is_in_shopping_cart(
+            queryset, is_in_shopping_cart
+        )
