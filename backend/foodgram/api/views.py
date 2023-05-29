@@ -265,13 +265,11 @@ class UserSubscriptionsView(APIView):
         for user_data in serializer_data:
             user_id = user_data['id']
             recipe_count = next(
-                (
-                item[
+                (item[
                     'count'
                 ] for item in recipes_count if item[
                     'author'
-                ] == user_id
-                ), 0
+                ] == user_id), 0
             )
             user_data['recipes_count'] = recipe_count
         return Response(serializer_data)
