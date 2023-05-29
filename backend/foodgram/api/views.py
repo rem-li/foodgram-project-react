@@ -251,7 +251,7 @@ class SetPasswordView(APIView):
 
 class UserSubscriptionsView(APIView):
 
-    def get(self, request):
+    def get(self, request, user_id):
         user = request.user
         try:
             subscriptions = user.subscriptions.all()
@@ -261,8 +261,13 @@ class UserSubscriptionsView(APIView):
             subscriptions, many=True,
             context={'request': request}
         )
-        response_data = serializer.data
-        return Response(response_data)
+        target_user = get_object_or_404(User, id=user_id)
+        recipes_count = Recipe.objects.filter(
+            author=target_user
+        ).count()
+        serializer_data = serializer.data
+        serializer_data['recipes_count'] = recipes_count
+        return Response(serializer_data)
 
     def post(self, request, user_id):
         target_user = get_object_or_404(User, id=user_id)
