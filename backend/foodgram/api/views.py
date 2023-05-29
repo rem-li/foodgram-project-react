@@ -68,6 +68,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return queryset.filter(
                 shopping_lists__user=self.request.user
             )
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
