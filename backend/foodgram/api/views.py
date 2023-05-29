@@ -65,7 +65,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
         if is_favorited == '1':
             return queryset.filter(
-                favorite_recipes__in=[self.request.user]
+                favorited_by=self.request.user
             )
         if is_in_shopping_cart == '1':
             return queryset.filter(
