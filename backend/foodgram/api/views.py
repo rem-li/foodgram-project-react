@@ -1,11 +1,11 @@
-from api.filters import IngredientFilter, RecipeFilter
+from api.filters import RecipeFilter
 from api.permissions import IsCreateOnly, IsRecipeAuthor
 from api.serializers import (IngredientSerializer, RecipeCreateSerializer,
                              RecipeSerializer, SetPasswordSerializer,
                              ShoppingListSerializer, TagSerializer,
                              UserCreateSerializer, UserRecieveTokenSerializer,
                              UserSerializer, UserSubscriptionSerializer)
-from django.db.models import F, Sum
+from django.db.models import F, Q, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -34,8 +34,16 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     pagination_class = None
     permission_classes = [AllowAny]
-    filter_backends = [DjangoFilterBackend]
-    filterset_class = IngredientFilter
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        search_query = self.request.query_params.get('search', None)
+        if search_query:
+            queryset = queryset.filter(
+                Q(name__istartswith=search_query)
+            )
+        return queryset
+
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
