@@ -1,4 +1,5 @@
 from django.db import transaction
+from drf_extra_fields.fields import Base64ImageField
 from recepies.models import (Ingredient, Recipe, RecipeIngredient,
                              ShoppingList, Tag)
 from rest_framework import serializers
@@ -99,7 +100,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     tags = serializers.PrimaryKeyRelatedField(
         many=True, queryset=Tag.objects.all()
         )
-    image = serializers.Base64ImageField(required=False, allow_null=True)
+    image = Base64ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Recipe
