@@ -5,7 +5,7 @@ from api.serializers import (IngredientSerializer, RecipeCreateSerializer,
                              ShoppingListSerializer, TagSerializer,
                              UserCreateSerializer, UserRecieveTokenSerializer,
                              UserSerializer, UserSubscriptionSerializer)
-from django.db.models import Exists, F, OuterRef, Sum
+from django.db.models import F, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend, SearchFilter
