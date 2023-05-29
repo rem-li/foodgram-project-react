@@ -198,10 +198,10 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = (
-            'id', 'email', 'username', 'first_name',
-            'last_name', 'is_subscribed', 'recipes'
-        )
+        fields = ('email', 'id',
+                  'username', 'first_name',
+                  'last_name', 'is_subscribed',
+                  'recipes', 'recipes_count')
 
     def get_is_subscribed(self, obj):
         user = self.context.get('request').user
@@ -209,14 +209,10 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
             return user.is_subscribed_to(obj)
         return False
 
-    def get_recipes(self, obj):
-        user_id = self.context.get('id')
-        recipes = Recipe.objects.filter(author__id=user_id)
-        return SubscriptionRecipeSerializer(
-                recipes, many=True
-            ).data
-
     def get_recipes_count(self, obj):
-        user_id = self.context.get('id')
-        count = Recipe.objects.filter(author__id=user_id).count()
-        return count
+        return Recipe.objects.filter(author__id=obj.id)
+
+    def get_recipes(self, obj):
+        recipes = Recipe.objects.filter(author__id=obj.id).count()
+        serializer = RecipeSerializer(recipes, many=True, read_only=True)
+        return serializer.data

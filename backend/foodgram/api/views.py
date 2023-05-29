@@ -246,7 +246,7 @@ class UserSubscriptionsView(APIView):
         except AttributeError:
             subscriptions = []
         serializer = UserSubscriptionSerializer(
-            subscriptions, many=True, context={'request': request}
+            subscriptions, many=True,   
         )
         response_data = serializer.data
         return Response(response_data)
