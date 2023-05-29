@@ -16,7 +16,7 @@ user_urls = [path(
     'set_password/', SetPasswordView.as_view(), name='set_password'
 ),
              path(
-    'subscriptions/', UserSubscriptionsView.as_view(), name='subscriptions'
+    'subscriptions/', UserViewSet.as_view(), name='subscriptions'
     ),
              path(
     '<int:user_id>/subscribe/',
