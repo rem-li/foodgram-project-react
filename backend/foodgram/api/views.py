@@ -253,15 +253,12 @@ class UserSubscriptionsView(APIView):
 
     def get(self, request, user_id):
         user = request.user
-        try:
-            subscriptions = user.subscriptions.all()
-        except AttributeError:
-            subscriptions = []
+        target_user = get_object_or_404(User, id=user_id)
+        subscriptions = user.subscriptions.all()
         serializer = UserSubscriptionSerializer(
             subscriptions, many=True,
             context={'request': request}
         )
-        target_user = get_object_or_404(User, id=user_id)
         recipes_count = Recipe.objects.filter(
             author=target_user
         ).count()
