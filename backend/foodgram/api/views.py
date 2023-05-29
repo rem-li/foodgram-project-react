@@ -239,18 +239,18 @@ class SetPasswordView(APIView):
 
 class UserSubscriptionsView(APIView):
 
-    # def get(self, request):
-    #     user = request.user
-    #     try:
-    #         subscriptions = user.subscriptions.all()
-    #     except AttributeError:
-    #         subscriptions = []
-    #     serializer = UserSubscriptionSerializer(
-    #         subscriptions, many=True,
-    #         context={'request': request}
-    #     )
-    #     response_data = serializer.data
-    #     return Response(response_data)
+    def get(self, request):
+        user = request.user
+        try:
+            subscriptions = user.subscriptions.all()
+        except AttributeError:
+            subscriptions = []
+        serializer = UserSubscriptionSerializer(
+            subscriptions, many=True,
+            context={'request': request}
+        )
+        response_data = serializer.data
+        return Response(response_data)
 
     def post(self, request, user_id):
         target_user = get_object_or_404(User, id=user_id)
