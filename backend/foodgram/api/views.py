@@ -1,4 +1,4 @@
-from api.filters import RecipeFilter
+from api.filters import IngredientFilter, RecipeFilter
 from api.permissions import IsCreateOnly, IsRecipeAuthor
 from api.serializers import (IngredientSerializer, RecipeCreateSerializer,
                              RecipeSerializer, RecipeShortSerializer,
@@ -35,6 +35,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     pagination_class = None
     permission_classes = [AllowAny]
+    filter_backends = (IngredientFilter,)
     search_fields = ('^name',)
 
 
