@@ -210,9 +210,9 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
         return False
 
     def get_recipes_count(self, obj):
-        return Recipe.objects.filter(author__id=obj.id)
+        return Recipe.objects.filter(author__id=obj.id).count()
 
     def get_recipes(self, obj):
-        recipes = Recipe.objects.filter(author__id=obj.id).count()
+        recipes = Recipe.objects.filter(author__id=obj.id)
         serializer = RecipeSerializer(recipes, many=True, read_only=True)
         return serializer.data
