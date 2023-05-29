@@ -93,13 +93,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
             user.favorite_recipes.add(recipe)
         elif request.method == 'DELETE':
             user.favorite_recipes.remove(recipe)
-        favorite_recipes = user.favorite_recipes.all()
-        serializer = RecipeSerializer(
-                favorite_recipes,
-                many=True,
-                context={'request': request}
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        # favorite_recipes = user.favorite_recipes.all()
+        # serializer = RecipeSerializer(
+        #         favorite_recipes,
+        #         many=True,
+        #         context={'request': request}
+        # )
+        # return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ShoppingListViewSet(viewsets.ModelViewSet):
