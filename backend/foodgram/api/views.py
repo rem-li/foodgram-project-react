@@ -35,11 +35,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     pagination_class = None
     permission_classes = [AllowAny]
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        search_query = self.request.query_params.get('search', None)
-        return queryset.filter(Q(name__istartswith=search_query))
+    search_fields = ('^name',)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
