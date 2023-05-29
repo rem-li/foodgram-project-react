@@ -216,5 +216,7 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
 
     def get_recipes(self, obj):
         recipes = Recipe.objects.filter(author__id=obj.id)
-        serializer = SubscriptionRecipeSerializer(recipes, many=True, read_only=True)
+        serializer = SubscriptionRecipeSerializer(
+            recipes, many=True, read_only=True
+        )
         return serializer.data

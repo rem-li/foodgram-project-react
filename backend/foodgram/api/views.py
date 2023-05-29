@@ -39,11 +39,9 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
         queryset = super().get_queryset()
         search_query = self.request.query_params.get('search', None)
         if search_query:
-            queryset = queryset.filter(
+            return queryset.filter(
                 Q(name__istartswith=search_query)
             )
-        return queryset
-
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
