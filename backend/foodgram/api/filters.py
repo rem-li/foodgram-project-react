@@ -4,8 +4,8 @@ from recepies.models import Recipe, Tag
 
 class RecipeFilter(django_filters.FilterSet):
     tags = django_filters.ModelMultipleChoiceFilter(
-        field_name='tags__name',
-        to_field_name='name',
+        field_name='tags__slug',
+        to_field_name='slug',
         queryset=Tag.objects.all()
     )
 
