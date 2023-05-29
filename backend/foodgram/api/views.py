@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from recepies.models import (Ingredient, Recipe, RecipeIngredient,
                              ShoppingList, Tag)
-from rest_framework import filters, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.generics import CreateAPIView
@@ -34,8 +34,8 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     pagination_class = None
     permission_classes = [AllowAny]
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['name']
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = IngredientFilter
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -61,18 +61,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             context={'request': request}
         )
         return Response(serializer.data)
-
-    # def get_queryset(self):
-    #     queryset = super().get_queryset()
-    #     if self.request.user.is_authenticated:
-    #         queryset = queryset.annotate(
-    #             is_favorited=Exists(
-    #                 self.request.user.favorite_recipes.filter(
-    #                     pk=OuterRef('pk')
-    #                 )
-    #             )
-    #         )
-    #     return queryset.order_by('-pub_date')
 
     @action(
             detail=True, methods=['POST', 'DELETE'],

@@ -1,5 +1,5 @@
 import django_filters
-from recepies.models import Recipe, Tag
+from recepies.models import Ingredient, Recipe, Tag
 
 
 class RecipeFilter(django_filters.FilterSet):
@@ -37,3 +37,11 @@ class RecipeFilter(django_filters.FilterSet):
         if value:
             return queryset.filter(shopping_lists__user=user)
         return queryset.exclude(shopping_lists__user=user)
+
+
+class IngredientFilter(django_filters.FilterSet):
+    name = django_filters.CharFilter(field_name='name', lookup_expr='icontains')
+
+    class Meta:
+        model = Ingredient
+        fields = ['name']
