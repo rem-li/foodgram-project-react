@@ -53,10 +53,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'create':
             return RecipeCreateSerializer
-        elif self.action == 'favorite':
+        if self.action == 'favorite':
             return RecipeShortSerializer
-        else:
-            return RecipeSerializer
+        return RecipeSerializer
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -101,8 +100,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Response(
                 serializer.data, status=status.HTTP_201_CREATED
             )
-        user.favorite_recipes.remove(recipe)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        if request.method == 'DELETE':
+            user.favorite_recipes.remove(recipe)
+            return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ShoppingListViewSet(viewsets.ModelViewSet):
