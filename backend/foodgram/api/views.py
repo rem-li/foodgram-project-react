@@ -7,6 +7,7 @@ from api.serializers import (IngredientSerializer, RecipeCreateSerializer,
                              TagSerializer, UserCreateSerializer,
                              UserRecieveTokenSerializer, UserSerializer,
                              UserSubscriptionSerializer)
+from foodgram.settings import DEFAULT_PAGINATION_CLASS
 from django.db.models import Count, F, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -251,7 +252,7 @@ class SetPasswordView(APIView):
 
 
 class UserSubscriptionsView(APIView):
-    # pagination_class = CustomPagination
+    pagination_class = DEFAULT_PAGINATION_CLASS
 
     def get(self, request):
         user = request.user
@@ -274,11 +275,10 @@ class UserSubscriptionsView(APIView):
                 ] == user_id), 0
             )
             user_data['recipes_count'] = recipe_count
-        # paginated_data = self.paginate_queryset(
-        #     serializer_data, request, view=self
-        # )
-        # return self.get_paginated_response(paginated_data)
-        return Response(serializer_data)
+        paginated_data = self.paginate_queryset(
+            serializer_data, request, view=self
+        )
+        return self.get_paginated_response(paginated_data)
 
     def post(self, request, user_id):
         target_user = get_object_or_404(User, id=user_id)
