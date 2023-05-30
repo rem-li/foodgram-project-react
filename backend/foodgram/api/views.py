@@ -1,5 +1,5 @@
 from api.filters import IngredientFilter, RecipeFilter
-from api.pagination import CustomPagination
+# from api.pagination import CustomPagination
 from api.permissions import IsCreateOnly, IsRecipeAuthor
 from api.serializers import (IngredientSerializer, RecipeCreateSerializer,
                              RecipeSerializer, RecipeShortSerializer,
@@ -251,7 +251,7 @@ class SetPasswordView(APIView):
 
 
 class UserSubscriptionsView(APIView):
-    pagination_class = CustomPagination
+    # pagination_class = CustomPagination
 
     def get(self, request):
         user = request.user
