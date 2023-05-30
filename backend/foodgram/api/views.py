@@ -50,7 +50,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     permission_classes = [IsRecipeAuthor]
 
     def get_serializer_class(self):
-        if self.action == 'create'or self.action == 'partial_update':
+        if self.action == 'create' or self.action == 'partial_update':
             return RecipeCreateSerializer
         if self.action == 'favorite':
             return RecipeShortSerializer
