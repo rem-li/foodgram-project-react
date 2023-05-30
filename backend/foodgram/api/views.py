@@ -263,10 +263,12 @@ class UserSubscriptionsView(APIView):
                 self._paginator = self.pagination_class()
         return self._paginator
 
-    def paginate_queryset(self, queryset):
+    def paginate_queryset(self, queryset, request, view=None):
         if self.paginator is None:
             return None
-        return self.paginator.paginate_queryset(queryset)
+        return self.paginator.paginate_queryset(
+            queryset, request=request, view=view
+        )
 
     def get_paginated_response(self, data):
         assert self.paginator is not None
@@ -294,7 +296,9 @@ class UserSubscriptionsView(APIView):
             )
             user_data['recipes_count'] = recipe_count
         paginated_data = self.paginate_queryset(
-            serializer_data
+            serializer_data,
+            request=request,
+            view=self
         )
         return self.get_paginated_response(paginated_data)
 
