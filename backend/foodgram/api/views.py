@@ -7,11 +7,11 @@ from api.serializers import (IngredientSerializer, RecipeCreateSerializer,
                              TagSerializer, UserCreateSerializer,
                              UserRecieveTokenSerializer, UserSerializer,
                              UserSubscriptionSerializer)
-from foodgram.settings import DEFAULT_PAGINATION_CLASS
 from django.db.models import Count, F, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from foodgram.settings import DEFAULT_PAGINATION_CLASS
 from recepies.models import (Ingredient, Recipe, RecipeIngredient,
                              ShoppingList, Tag)
 from rest_framework import status, viewsets
