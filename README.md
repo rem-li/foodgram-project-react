@@ -15,3 +15,16 @@
 * Simple JWT
 * SQLite3
 
+## Примеры некоторых запросов API
+
+Получить токен:
+`POST /api/auth/token/login/`
+
+Подписка на пользователя:
+`POST /api/users/{user_id}/subscribe/`
+
+Добавление нового рецепта:
+`POST /api/recipes/`
+
+Добавить рецепт в список покупок:
+`POST /api/recipes/{id}/shopping_cart/`

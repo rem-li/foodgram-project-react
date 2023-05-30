@@ -221,7 +221,9 @@ class UserSubscriptionSerializer(serializers.ModelSerializer):
         return Recipe.objects.filter(author__id=obj.id).count()
 
     def get_recipes(self, obj):
-        recipes = Recipe.objects.filter(author__id=obj.id)
+        recipes = Recipe.objects.filter(
+            author__id=obj.id
+        ).order_by('-created_at')[:3]
         serializer = SubscriptionRecipeSerializer(
             recipes, many=True, read_only=True
         )
