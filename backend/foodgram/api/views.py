@@ -11,13 +11,13 @@ from django.db.models import Count, F, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from foodgram.settings import DEFAULT_PAGINATION_CLASS
 from recepies.models import (Ingredient, Recipe, RecipeIngredient,
                              ShoppingList, Tag)
 from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.generics import CreateAPIView
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED
@@ -252,7 +252,7 @@ class SetPasswordView(APIView):
 
 
 class UserSubscriptionsView(APIView):
-    pagination_class = DEFAULT_PAGINATION_CLASS
+    pagination_class = PageNumberPagination
 
     def get(self, request):
         user = request.user
