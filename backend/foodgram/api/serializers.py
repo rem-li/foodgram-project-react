@@ -1,3 +1,5 @@
+import traceback
+
 from django.db import transaction
 from drf_extra_fields.fields import Base64ImageField
 from recepies.models import (Ingredient, Recipe, RecipeIngredient,
@@ -117,21 +119,25 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        ingredient_amounts = validated_data.pop('ingredients')
-        if 'tags' in validated_data:
-            tags = validated_data.pop('tags')
+        try:
+            ingredient_amounts = validated_data.pop('ingredients')
+            if 'tags' in validated_data:
+                tags = validated_data.pop('tags')
+                instance.tags.set(tags)
+            instance = super().update(instance, validated_data)
+            RecipeIngredient.objects.filter(recipe=instance).delete()
+            recipe_ingredients = [
+                RecipeIngredient(
+                    recipe=instance, **ia
+                ) for ia in ingredient_amounts
+            ]
+            RecipeIngredient.objects.bulk_create(recipe_ingredients)
             instance.tags.set(tags)
-        instance = super().update(instance, validated_data)
-        RecipeIngredient.objects.filter(recipe=instance).delete()
-        recipe_ingredients = [
-            RecipeIngredient(
-                recipe=instance, **ia
-            ) for ia in ingredient_amounts
-        ]
-        RecipeIngredient.objects.bulk_create(recipe_ingredients)
-        instance.tags.set(tags)
-        instance.save()
-        return instance
+            instance.save()
+            return instance
+        except Exception as e:
+            traceback.print_exc()
+            return "An error occurred: {}".format(str(e))
 
     @transaction.atomic
     def create(self, validated_data):
