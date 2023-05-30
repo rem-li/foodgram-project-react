@@ -1,5 +1,5 @@
 from api.filters import IngredientFilter, RecipeFilter
-from api.pagination import CustomPagination
+# from api.pagination import CustomPagination
 from api.permissions import IsCreateOnly, IsRecipeAuthor
 from api.serializers import (IngredientSerializer, RecipeCreateSerializer,
                              RecipeSerializer, RecipeShortSerializer,
@@ -43,7 +43,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
     ordering_fields = ('pub_date',)
-    queryset = Recipe.objects.all().order_by('id')
+    queryset = Recipe.objects.all().order_by('-pub_date')
     filter_backends = [DjangoFilterBackend]
     filterset_class = RecipeFilter
     permission_classes = [IsRecipeAuthor]
@@ -251,7 +251,7 @@ class SetPasswordView(APIView):
 
 
 class UserSubscriptionsView(APIView):
-    pagination_class = CustomPagination
+    # pagination_class = CustomPagination
 
     def get(self, request):
         user = request.user
