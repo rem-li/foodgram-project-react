@@ -207,7 +207,9 @@ class UserViewSet(viewsets.ModelViewSet):
     )
     def get_me_data(self, request):
         """Getting user data."""
-        serializer = UserSerializer(context={'request': request})
+        serializer = UserSerializer(
+            request.user, context={'request': request}
+        )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, *args, **kwargs):
@@ -305,7 +307,7 @@ class UserSubscriptionsView(APIView):
         target_user = get_object_or_404(User, id=user_id)
         user = request.user
         if target_user == user:
-            return Response(status=400)
+            return Response({'error': 'Invalid target user'}, status=400)
         serializer = UserSubscriptionSerializer(
             user, context={'request': request}
         )
