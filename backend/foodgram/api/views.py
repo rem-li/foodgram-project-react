@@ -268,8 +268,7 @@ class UserSubscriptionsView(APIView):
             return None
         return self.paginator.paginate_queryset(
                     queryset,
-                    self.request,
-                    view=self
+                    self.request
                 )
 
     def get_paginated_response(self, data):
