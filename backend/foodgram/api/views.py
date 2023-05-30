@@ -305,7 +305,7 @@ class UserSubscriptionsView(APIView):
         target_user = get_object_or_404(User, id=user_id)
         user = request.user
         if target_user == user:
-            return Response({'error': 'Invalid target user'}, status=400)
+            return Response(status=400)
         serializer = UserSubscriptionSerializer(
             user, context={'request': request}
         )
