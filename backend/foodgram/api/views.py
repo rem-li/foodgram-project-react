@@ -137,22 +137,21 @@ class ShoppingListViewSet(viewsets.ModelViewSet):
 class ShoppingCartDownloadView(APIView):
 
     def get(self, request):
-        ingredients = (
-                RecipeIngredient.objects.select_related(
-                    'recipe', 'ingredients'
-                ).filter(
-                    recipe__shopping_lists__user=request.user,
-                ).annotate(
-                    name=F('ingredients__name'),
-                    units=F('ingredients__units'),
-                    total=Sum('amount'),
-                )
-            )
+        ingredients = RecipeIngredient.objects.select_related(
+            'recipe', 'ingredients'
+        ).filter(
+            recipe__shopping_lists__user=request.user,
+        ).values(
+            name=F('ingredients__name'),
+            units=F('ingredients__units')
+        ).annotate(
+            total=Sum('amount')
+        )
         ingredients_str = ''
         for ingredient in ingredients:
-            name = ingredient.ingredients.name
-            amount = ingredient.amount
-            measurement_unit = ingredient.ingredients.units
+            name = ingredient['name']
+            amount = ingredient['total']
+            measurement_unit = ingredient['units']
             ingredients_str += f"{name} ({measurement_unit}) — {amount}\n"
         response = HttpResponse(content_type='text/plain')
         response['Content-Disposition'] = (
