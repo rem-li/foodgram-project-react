@@ -261,7 +261,7 @@ class UserSubscriptionsView(APIView):
                 self._paginator = None
             else:
                 self._paginator = self.pagination_class()
-            return self._paginator
+        return self._paginator
 
     def paginate_queryset(self, queryset):
         if self.paginator is None:
