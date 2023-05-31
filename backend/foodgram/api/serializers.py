@@ -119,25 +119,38 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        try:
-            ingredient_amounts = validated_data.pop('ingredients')
-            if 'tags' in validated_data:
-                tags = validated_data.pop('tags')
-                instance.tags.set(tags)
-            instance = super().update(instance, validated_data)
-            RecipeIngredient.objects.filter(recipe=instance).delete()
-            recipe_ingredients = [
-                RecipeIngredient(
-                    recipe=instance, **ia
-                ) for ia in ingredient_amounts
-            ]
-            RecipeIngredient.objects.bulk_create(recipe_ingredients)
+        if 'name' in validated_data:
+            instance.name = validated_data['name']
+        if 'text' in validated_data:
+            instance.text = validated_data['text']
+        if 'cooking_time' in validated_data:
+            instance.cooking_time = validated_data['cooking_time']
+        if 'image' in validated_data:
+            instance.image = validated_data['image']
+        ingredient_amounts = validated_data.get('ingredients')
+        if ingredient_amounts is not None:
+            recipe_ingredients = []
+            for ia in ingredient_amounts:
+                ingredient = ia['id']
+                amount = ia['amount']
+                recipe_ingredient, _ = (
+                    RecipeIngredient.objects.update_or_create(
+                    recipe=instance,
+                    ingredients=ingredient,
+                    defaults={'amount': amount}
+                )
+                )
+                recipe_ingredients.append(recipe_ingredient)
+            RecipeIngredient.objects.filter(
+                recipe=instance
+            ).exclude(
+                id__in=[ri.id for ri in recipe_ingredients]
+            ).delete()
+        tags = validated_data.get('tags')
+        if tags is not None:
             instance.tags.set(tags)
-            instance.save()
-            return instance
-        except Exception as e:
-            traceback.print_exc()
-            return "An error occurred: {}".format(str(e))
+        instance.save()
+        return instance
 
     @transaction.atomic
     def create(self, validated_data):
