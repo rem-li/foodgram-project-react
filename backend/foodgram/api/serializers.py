@@ -1,5 +1,3 @@
-import traceback
-
 from django.db import transaction
 from drf_extra_fields.fields import Base64ImageField
 from recepies.models import (Ingredient, Recipe, RecipeIngredient,
@@ -135,9 +133,9 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                 amount = ia['amount']
                 recipe_ingredient, _ = (
                     RecipeIngredient.objects.update_or_create(
-                    recipe=instance,
-                    ingredients=ingredient,
-                    defaults={'amount': amount}
+                        recipe=instance,
+                        ingredients=ingredient,
+                        defaults={'amount': amount}
                     )
                 )
                 recipe_ingredients.append(recipe_ingredient)
