@@ -138,7 +138,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                     recipe=instance,
                     ingredients=ingredient,
                     defaults={'amount': amount}
-                )
+                    )
                 )
                 recipe_ingredients.append(recipe_ingredient)
             RecipeIngredient.objects.filter(
